@@ -1,11 +1,25 @@
 Package: GWASviaDGLM
 Type: Package
-Title: Uses the DGLM packge (double generalized linear model) to do a GWAS, assess significance of results, and plot results
+Title: Uses the DGLM packge (double generalized linear model) to do a GWAS,
+    assess significance of results, and plot results
 Version: 0.1
 Date: 2015-09-30
 Author: Robert Corty
 Maintainer: <rcorty@gmail.com>
-Description: This GWAS approach allows for covariates to influence the environmental (residual) variance of individuals.
+Description: This GWAS approach allows for covariates to influence the
+    environmental (residual) variance of individuals.
 License: GPL-3
-Depends: dplyr, dglm, evd
 LazyData: TRUE
+Depends:
+    R (>= 3.1.0)
+Suggests:
+    testthat
+RoxygenNote: 5.0.1
+Imports: dplyr,
+    tidyr,
+    ggplot2,
+    stringr,
+    GGally,
+    dglm,
+    evd,
+    broman
