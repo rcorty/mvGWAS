@@ -5,5 +5,11 @@
 #' @author Robert Corty
 
 ValidateGenotypes <- function(genTable) {
-  return(TRUE)
+
+  genoVals <- genTable %>% select(-id)
+
+  if (min(genoVals) < 0) { stop('Genotype less than 0 observed. Genotypes must be in [0, 2].')}
+  if (max(genoVals) > 2) { stop('Genotype greater than 2 observed. Genotypes must be in [0, 2].')}
+
+  return(genTable)
 }

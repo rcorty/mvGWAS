@@ -5,5 +5,5 @@
 #' @author Robert Corty
 
 ValidatePhenotypes <- function(phenTable) {
-  return(TRUE)
+  return(phenTable)
 }

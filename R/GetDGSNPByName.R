@@ -1,0 +1,29 @@
+#' @title GetDGSNPByName Function
+#' @name GetDGSNPByName
+#' @author Robert Corty
+#'
+#' @description This function accesses a snp by name based on a map.file,
+#' a list of genotype.files, and a snp.name
+#'
+#' @param file.names a list of 3.
+#'
+#' @return the SNP in a named vector
+#'
+#' @export
+#'
+GetDGSNPByName <- function(file.names, snp.name) {
+
+  map <- readRDS(file = file.names[['map.file']])
+
+  # figure out which geno.file needs to be loaded and load it
+  chr <- map %>% tbl_df %>% filter(rsID == snp.name) %>% dplyr::select(Chr) %>% as.character()
+  all.chrs <- sort(unique(map$Chr))
+  chr.idx <- which(chr == all.chrs)
+  genos <- readRDS(file = file.names[['geno.files']][chr.idx])
+
+  snp <- genos[, grep(pattern = snp.name, x = names(genos), fixed = TRUE)]
+  names(snp) <- genos$IID
+  attr(x = snp, which = 'chr') <- chr
+
+  return(snp)
+}
