@@ -4,7 +4,7 @@
 \alias{QQPlot}
 \title{QQPlot Function}
 \usage{
-QQPlot(v, theoretical = "unif", neg.log.ten = TRUE)
+QQPlot(v, theoretical = "unif", do.neg.log.ten = TRUE, color = "black")
 }
 \arguments{
 \item{v}{values to be plotted}
@@ -12,7 +12,7 @@ QQPlot(v, theoretical = "unif", neg.log.ten = TRUE)
 \item{theoretical}{theoretical distribution of the values \code{v},
 defaults to 'unif'.  Other possible values are 'normal'}
 
-\item{neg.log.ten}{Whether \code{v} and its theoretical values should be
+\item{plot.neg.log.ten}{Whether \code{v} and its theoretical values should be
 negative-log-tenned before plotting.}
 }
 \value{

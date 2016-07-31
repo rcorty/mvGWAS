@@ -10,7 +10,7 @@
 #' @param v values to be plotted
 #' @param theoretical theoretical distribution of the values \code{v},
 #' defaults to 'unif'.  Other possible values are 'normal'
-#' @param neg.log.ten Whether \code{v} and its theoretical values should be
+#' @param plot.neg.log.ten Whether \code{v} and its theoretical values should be
 #' negative-log-tenned before plotting.
 #'
 #' @details For uniform theoretical distribution, the 'less interesting' end
@@ -25,54 +25,65 @@
 #'
 #' @export
 #'
-QQPlot <- function(v, theoretical = 'unif', neg.log.ten = TRUE) {
+QQPlot <- function(v,
+                   theoretical = 'unif',
+                   do.neg.log.ten = TRUE,
+                   color = 'black') {
+
+  n <- length(v) - sum(is.na(v))
 
   if (length(v) - sum(is.na(v)) > 1e7) {
     stop('QQPlot can only handle vectors of size less than 1e7 at this point.')
   }
 
-  v <- sort(v, na.last = NA)
-  n <- length(v)
+  if (n < 1e3) {
+    show <- 1:n
+  } else {
+    if (n < 1e4) {
+      show <- c(seq(from = 1, to = 1e3, by = 1e0),
+                seq(from = 1e3 + 1, to = n, by = 1e1))
+    } else {
+      if (n < 1e5) {
+        show <- c(seq(from = 1, to = 1e3, by = 1e0),
+                  seq(from = 1e3 + 1, to = 1e4, by = 1e1),
+                  seq(from = 1e4 + 1, to = n, by = 1e2))
+      } else {
+        if (n < 1e6) {
+          show <- c(seq(from = 1, to = 1e3, by = 1e0),
+                    seq(from = 1e3 + 1, to = 1e4, by = 1e1),
+                    seq(from = 1e4 + 1, to = 1e5, by = 1e2),
+                    seq(from = 1e5 + 1, to = n, by = 1e3))
+        } else {
+          if (n < 1e7) {
+            show <- c(seq(from = 1, to = 1e3, by = 1e0),
+                      seq(from = 1e3 + 1, to = 1e4, by = 1e1),
+                      seq(from = 1e4 + 1, to = 1e5, by = 1e2),
+                      seq(from = 1e5 + 1, to = 1e6, by = 1e3),
+                      seq(from = 1e6 + 1, to = n, by = 1e4))
+          } else {
+            stop('QQPlot can only take 1e7 points')
+          }
+        }
+      }
+    }
+  }
 
   if (theoretical == 'unif') {
 
-    theo <- seq(from = 0, to = 1, length.out = n)
+    theo <- -log10(seq(from = 0, to = 1, length.out = n))
 
-    if (neg.log.ten) {
-
-      theo <- -log10(x = theo)
-      v <- -log10(x = v)
-
-      if (n < 1e3) {
-        show <- 1:n
-      }
-      if (n < 1e4) {
-        show <- c(show,
-                  seq(from = 1e3 + 1, to = n, by = 1e1))
-      }
-      if (n < 1e5) {
-        show <- c(show,
-                  seq(from = 1e4 + 1, to = n, by = 1e2))
-      }
-      if (n < 1e6) {
-        show <- c(show,
-                  seq(from = 1e5 + 1, to = n, by = 1e3))
-      }
-      if (n < 1e7) {
-        show <- c(show,
-                  seq(from = 1e6 + 1, to = n, by = 1e4))
-      }
-
-      data.frame(emp = v[show], theo = theo[show]) %>%
-        ggplot2::ggplot(aes(x = theo, y = emp)) +
-        geom_point() +
-        geom_abline(slope = 1, intercept = 0) +
-        coord_fixed(ratio = 1) +
-        theme_bw()
-
+    if (do.neg.log.ten) {
+      v <- sort(x = -log10(v), na.last = NA, decreasing = TRUE)
     } else {
-      stop('QQPlot can only plot neg log tenned values currently.')
+      v <- sort(x = v, na.last = NA, decreasing = TRUE)
     }
+
+    data.frame(emp = v[show], theo = theo[show]) %>%
+      ggplot2::ggplot(ggplot2::aes(x = theo, y = emp)) +
+      ggplot2::geom_point(color = color) +
+      ggplot2::geom_abline(slope = 1, intercept = 0) +
+      ggplot2::coord_fixed(ratio = 1) +
+      ggplot2::theme_bw()
 
   } else {
     stop('Theoretical distributions other than uniform not yet implemented.')
