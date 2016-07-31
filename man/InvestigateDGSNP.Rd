@@ -4,10 +4,12 @@
 \alias{InvestigateDGSNP}
 \title{InvestigateDGSNP}
 \usage{
-InvestigateDGSNP(phenotype.name, snp.name, file.names, keep.only = NULL,
-  mean.formula = NULL, var.formula = NULL, verbose.title = FALSE,
-  draw.violins = TRUE, draw.scatter = TRUE, draw.sd.bars = TRUE,
-  draw.summary.stats = TRUE, alpha.scatter = 0.4, alpha.violin = 0.4)
+InvestigateDGSNP(phenotype.name, snp.name, snp.values = NULL, chr = NULL,
+  file.names = NULL, modeling.df = NULL, dot.color = NULL,
+  keep.only = NULL, mean.formula = NULL, var.formula = NULL,
+  verbose.title = FALSE, draw.violins = TRUE, draw.scatter = TRUE,
+  draw.sd.bars = TRUE, draw.summary.stats = TRUE, alpha.scatter = 0.4,
+  alpha.violin = 0.4)
 }
 \arguments{
 \item{alpha.violin}{}

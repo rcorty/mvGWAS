@@ -24,7 +24,11 @@
 #' @examples
 InvestigateDGSNP <- function(phenotype.name,
                              snp.name,
-                             file.names,
+                             snp.values = NULL,
+                             chr = NULL,
+                             file.names = NULL,
+                             modeling.df = NULL,
+                             dot.color = NULL,
                              keep.only = NULL,
                              mean.formula = NULL,
                              var.formula = NULL,
@@ -36,15 +40,24 @@ InvestigateDGSNP <- function(phenotype.name,
                              alpha.scatter = 0.4,
                              alpha.violin = 0.4) {
 
-  snp <- GetDGSNPByName(file.names = file.names,
-                        snp.name = snp.name)
-  chr <- attr(x = snp, which = 'chr')
+  if (is.null(modeling.df)) {
+    modeling.df  <- readRDS(file = file.names[['phen.file']])
+  }
 
-  phens <- readRDS(file = file.names[['phen.file']])
+  if (is.null(snp.values)) {
+    snp <- GetDGSNPByName(file.names = file.names,
+                          snp.name = snp.name)
+    chr <- attr(x = snp, which = 'chr')
+    perm.for.genos <- match(modeling.df$IID, names(snp))
+    modeling.df[['snp']] <- snp[perm.for.genos]
+  } else {
+    modeling.df[['snp']] <- snp.values
+    if (is.null(chr)) {
+      stop('If snp is provided as value (rather than name), chromosome must be provided.')
+    }
+  }
 
-  perm.for.genos <- match(phens$IID, names(snp))
-  modeling.df <- phens
-  modeling.df[['snp']] <- snp[perm.for.genos]
+
 
   keep.only <- lazyeval::f_eval(f = lazyeval::f_capture(keep.only),
                                 data = modeling.df)
@@ -72,10 +85,10 @@ InvestigateDGSNP <- function(phenotype.name,
   }
 
   plotting.df <- modeling.df
-  plotting.df[['resid']] <- if (exists('resids')) {
-    long.resids
+  if (exists('long.resids')) {
+    plotting.df[['resid']] <- long.resids
   } else {
-    plotting.df[[phenotype.name]]
+    plotting.df[['resid']] <- plotting.df[[as.character(phenotype.name)]]
   }
 
   summary.stats <- plotting.df %>%
@@ -99,7 +112,7 @@ InvestigateDGSNP <- function(phenotype.name,
   if (draw.scatter) {
     p <- p +
       ggplot2::geom_jitter(data = plotting.df,
-                           mapping = ggplot2::aes(x = snp, y = resid),
+                           mapping = ggplot2::aes_string(x = 'snp', y = 'resid', col = dot.color),
                            width = 0.4,
                            height = 0,
                            alpha = alpha.scatter) +
@@ -198,7 +211,7 @@ InvestigateDGSNP <- function(phenotype.name,
 
 
   p <- p +
-    ggplot2::coord_cartesian(xlim = c(-0.3, 2.3)) +
+    ggplot2::coord_cartesian(xlim = c(-0.4, 2.4)) +
     ggplot2::theme_bw() +
     ggplot2::xlab(snp.name) +
     ggplot2::ylab(phenotype.name) +
