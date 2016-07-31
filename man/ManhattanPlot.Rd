@@ -4,9 +4,9 @@
 \alias{ManhattanPlot}
 \title{ManhattanPlot}
 \usage{
-ManhattanPlot(df, lower.bound = 2, hit.cutoff = 4, hit.alpha = 0.8,
-  non.hit.alpha = 0.3, hit.point.size = 1, non.hit.point.size = 0.5,
-  ps.already.logged = FALSE)
+ManhattanPlot(df, use.plotly = FALSE, lower.bound = 2, hit.cutoff = 4,
+  hit.alpha = 0.8, non.hit.alpha = 0.3, hit.point.size = 1,
+  non.hit.point.size = 0.5, do.neg.log.ten = TRUE)
 }
 \arguments{
 \item{...}{}

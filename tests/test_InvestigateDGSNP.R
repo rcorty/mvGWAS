@@ -6,10 +6,23 @@ file.names <- list(phen.file = '../CVD_Lange_dGWAS/1_ProjectData/2_ProcessedData
 
 phens <- readRDS(file = file.names[['phen.file']])
 
-InvestigateDGSNP(phenotype.name = 'sbp_v1_adj',
-                 snp.name = 'rs11143868',
+
+InvestigateDGSNP(phenotype.name = 'BMI_v2',
+                 snp.name = 'rs12771692',
                  file.names = file.names,
-                 mean.formula = sbp_v1_adj ~ EV1 + snp,
+                 keep.only = bpmeds_v1 == 'no')
+
+
+InvestigateDGSNP(phenotype.name = 'BMI_v3',
+                 snp.name = 'rs12621732',
+                 file.names = file.names,
+                 mean.formula = formula('BMI_v3^(-0.19) ~ EV1 + snp'),
                  var.formula = ~ EV4 + snp,
-                 keep.only = sex == 'male',
-                 verbose.title = TRUE)
+                 keep.only = bpmeds_v1 == 'yes')
+
+InvestigateDGSNP(phenotype.name = 'BMI_v3',
+                 snp.name = 'my.great.snp',
+                 snp.values = sample(x = 0:2, size = nrow(phens), replace = TRUE),
+                 chr = '3',
+                 file.names = file.names,
+                 modeling.df = phens)

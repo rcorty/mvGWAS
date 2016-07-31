@@ -11,23 +11,26 @@
 #' @examples
 #'
 ManhattanPlot <- function(df,
+                          use.plotly = FALSE,
                           lower.bound = 2,
                           hit.cutoff = 4,
                           hit.alpha = 0.8,
                           non.hit.alpha = 0.3,
                           hit.point.size = 1,
                           non.hit.point.size = 0.5,
-                          ps.already.logged = FALSE) {
+                          do.neg.log.ten = TRUE) {
 
   if (!all(c('chr', 'pos', 'mean.p', 'var.p') %in% names(df))) {
     stop("tbl_df to make Manhattan Plot must contain columns 'chr', 'pos', 'mean.p', and 'var.p'")
   }
 
-  df$mean.p <- -log10(df$mean.p)
-  df$var.p <- -log10(df$var.p)
+  if (do.neg.log.ten) {
+    df$mean.p <- -log10(df$mean.p)
+    df$var.p <- -log10(df$var.p)
+  }
 
-  ggplot(data = df, mapping = aes(x = pos)) +
-    facet_grid(~chr, scales = 'free_x', switch = 'x', space = 'free') +
+  p <- ggplot(data = df, mapping = aes(x = pos)) +
+    facet_grid(~chr, scales = 'free_x', switch = 'x', space = 'free', drop = FALSE) +
     geom_point(data = subset(df, mean.p > lower.bound & !is.na(mean.p)), mapping = aes(y = mean.p), color = 'blue', size = non.hit.point.size, alpha = non.hit.alpha) +
     geom_point(data = subset(df, mean.p > hit.cutoff & !is.na(mean.p)), mapping = aes(y = mean.p), color = 'blue', size = hit.point.size, shape = 21, alpha = hit.alpha) +
     geom_point(data = subset(df, var.p > lower.bound & !is.na(var.p)), mapping = aes(y = var.p), color = 'red', size = non.hit.point.size, alpha = non.hit.alpha) +
@@ -38,4 +41,10 @@ ManhattanPlot <- function(df,
           axis.text.x = element_blank()) +
     xlab('Chromosome and position in Mb') +
     ylab('-log10(p)')
+
+  if (use.plotly) {
+    return(plotly::ggplotly(p))
+  } else {
+    return(p)
+  }
 }

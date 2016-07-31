@@ -5,9 +5,8 @@
 \title{PhenotypeByDGSNP Function}
 \usage{
 PhenotypeByDGSNP(phenotype.name, snp.name, file.names, box.cox.lambda = 1,
-  mean.formula = NULL, var.formula = NULL, draw.ns = FALSE,
-  violin = FALSE, scatter = TRUE, sd.bars = TRUE, alpha.scatter = 0.4,
-  alpha.violin = 0.4, ...)
+  draw.ns = FALSE, violin = FALSE, scatter = TRUE, sd.bars = TRUE,
+  alpha.scatter = 0.4, alpha.violin = 0.4, ...)
 }
 \arguments{
 \item{phenotype.name}{the phenotype to plot}

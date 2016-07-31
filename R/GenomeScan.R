@@ -5,7 +5,9 @@
 #' @return object of class c('tbl_df', 'data.frame') with []
 #' @author Robert Corty
 
-GenomeScan <- function(phenTable, genTable, meanFormula, varFormula,
+GenomeScan <- function(meanFormula,
+                       varFormula,
+                       file.names,
                        verbose = FALSE) {
 
   phenTable <- ValidatePhenotypes(phenTable = phenTable)

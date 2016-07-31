@@ -4,7 +4,7 @@
 \alias{GenomeScan}
 \title{GenomeScan}
 \usage{
-GenomeScan(phenTable, genTable, meanFormula, varFormula, verbose = FALSE)
+GenomeScan(meanFormula, varFormula, file.names, verbose = FALSE)
 }
 \arguments{
 \item{phenTable, }{a table of phenotypes to be validated}

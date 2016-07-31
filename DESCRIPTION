@@ -22,4 +22,5 @@ Imports: dplyr,
     GGally,
     dglm,
     evd,
-    broman
+    broman,
+    magrittr
