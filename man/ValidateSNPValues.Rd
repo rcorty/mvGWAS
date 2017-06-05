@@ -12,4 +12,3 @@ ValidateSNPValues(snp.values, phen.df)
 \author{
 Robert W. Corty
 }
-

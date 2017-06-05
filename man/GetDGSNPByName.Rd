@@ -19,4 +19,3 @@ a list of genotype.files, and a snp.name
 \author{
 Robert Corty
 }
-

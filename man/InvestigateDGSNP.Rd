@@ -21,4 +21,3 @@ nucleotide polymorphism
 \author{
 Robert W. Corty
 }
-

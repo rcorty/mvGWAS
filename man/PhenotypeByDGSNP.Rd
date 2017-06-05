@@ -27,4 +27,3 @@ options [a, b, and c] must have been set a priori.
 \author{
 Robert Corty
 }
-

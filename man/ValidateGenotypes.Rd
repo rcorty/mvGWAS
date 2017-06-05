@@ -15,4 +15,3 @@ TRUE if genTable is a valid genotype table for GWASviaDGLM, FALSE otherwise
 \author{
 Robert Corty
 }
-

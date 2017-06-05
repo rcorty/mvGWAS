@@ -4,12 +4,40 @@
 \alias{ManhattanPlot}
 \title{ManhattanPlot}
 \usage{
-ManhattanPlot(df, use.plotly = FALSE, lower.bound = 2, hit.cutoff = 4,
+ManhattanPlot(df, lower.bound = 2, hit.cutoff = -log10(0.05/nrow(df)),
   hit.alpha = 0.8, non.hit.alpha = 0.3, hit.point.size = 1,
-  non.hit.point.size = 0.5, do.neg.log.ten = TRUE)
+  non.hit.point.size = 0.5, do.neg.log.ten = TRUE, use.plotly = FALSE)
 }
 \arguments{
-\item{...}{}
+\item{df}{The tbl_df to be plotted.  Must have columns called 'chr', 'pos',
+'mean.p', and 'var.p'.}
+
+\item{lower.bound}{The lowest value to be plotted.  This number will be
+interpreted on the negative log ten scale, so 2 implies that the least
+significant p-value to be plotted will be 0.01.}
+
+\item{hit.cutoff}{The lowest value that gets a bigger dot, drawing
+attention to it.  Default to \code{-log10(0.05/nrow(df))}.}
+
+\item{hit.alpha}{Alpha value (opacity) for SNPs above the hit cutoff.
+Defaults to 0.8}
+
+\item{non.hit.alpha}{Alpha value (opacity) for SNPs below the hit cutoff.
+Defaults to 0.3.}
+
+\item{hit.point.size}{Size of points above the hit cutoff.  Defaults
+to 1.}
+
+\item{non.hit.point.size}{Size of poitns below the hit cutoff.  Defaults
+to 0.3.}
+
+\item{do.neg.log.ten}{Whether this ploting function should compute the
+-log10 of the p-values supplied in \code{df}.  Defaults to TRUE, which
+is valid when p-values are supplied.  -log10 of p-values may be provided
+in some cases, e.g. when using this plotting function in the context of
+a Shiny app that uses brushing to select a SNP.}
+
+\item{use.plotly}{}
 }
 \examples{
 
@@ -17,4 +45,3 @@ ManhattanPlot(df, use.plotly = FALSE, lower.bound = 2, hit.cutoff = 4,
 \author{
 Robert Corty
 }
-

@@ -15,4 +15,3 @@ TRUE if phenTable is a valid phenotype table for GWASviaDGLM, FALSE otherwise
 \author{
 Robert Corty
 }
-

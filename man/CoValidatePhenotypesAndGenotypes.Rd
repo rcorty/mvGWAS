@@ -17,4 +17,3 @@ TRUE if phenTable and genTable are co-valid for use in GWASviaDGLM
 \author{
 Robert Corty
 }
-

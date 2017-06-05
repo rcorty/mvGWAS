@@ -24,4 +24,3 @@ This function calculates the
 \author{
 Robert Corty
 }
-

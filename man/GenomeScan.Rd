@@ -17,4 +17,3 @@ object of class c('tbl_df', 'data.frame') with []
 \author{
 Robert Corty
 }
-
