@@ -13,7 +13,8 @@ LazyData: TRUE
 Depends:
     R (>= 3.1.0)
 Suggests:
-    testthat
+    testthat,
+    covr
 RoxygenNote: 6.0.1
 Imports: dplyr,
     tidyr,
@@ -23,4 +24,7 @@ Imports: dplyr,
     dglm,
     evd,
     broman,
-    magrittr
+    magrittr,
+    tidyverse,
+    vcfR,
+    parallel

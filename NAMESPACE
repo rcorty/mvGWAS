@@ -2,9 +2,12 @@
 
 export(GetDGSNPByName)
 export(InvestigateDGSNP)
-export(LHSList)
 export(ManhattanPlot)
 export(PhenotypeByDGSNP)
 export(QQPlot)
 export(ValidateSNPValues)
+export(mvGWAS)
+export(tryNA)
+export(tryNULL)
+exportClasses(mvGWAS)
 importFrom(magrittr,"%>%")
