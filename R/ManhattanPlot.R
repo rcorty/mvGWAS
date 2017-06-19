@@ -22,12 +22,10 @@
 #' is valid when p-values are supplied.  -log10 of p-values may be provided
 #' in some cases, e.g. when using this plotting function in the context of
 #' a Shiny app that uses brushing to select a SNP.
-#' @param use.plotly
+#' @param use.plotly should plot be wrapped in a plotly object?
 #'
-#' @return
+#' @return a plot
 #' @export
-#'
-#' @examples
 #'
 ManhattanPlot <- function(df,
                           lower.bound = 2,

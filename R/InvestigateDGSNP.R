@@ -6,22 +6,21 @@
 #' nucleotide polymorphism
 #'
 #'
-#' @param phenotype.name
-#' @param snp.name
-#' @param file.names
-#' @param mean.formula
-#' @param var.formula
-#' @param draw.ns
-#' @param draw.violins
-#' @param draw.scatter
-#' @param draw.sd.bar
-#' @param alpha.scatter
-#' @param alpha.violin
+#' @param phenotype.name name of the phenotype
+#' @param snp.name name of the snp
+#' @param file.names names of phenotype and genotype files
+#' @param mean.formula the mean formula
+#' @param var.formula the variance formula
+#' @param draw.ns should the n per group be plotted
+#' @param draw.violins should the violion plot be plotted
+#' @param draw.scatter should the scatter plot be plotted
+#' @param draw.sd.bar should the bars indicating the standard deviation of each genotype be plotted
+#' @param alpha.scatter alpha on the scatter plot
+#' @param alpha.violin alpha on the violin
 #'
-#' @return
+#' @return nothing, just plots
 #' @export
 #'
-#' @examples
 InvestigateDGSNP <- function(phenotype.name,
                              snp.name,
                              snp.values = NULL,
