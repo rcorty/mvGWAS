@@ -1,4 +1,4 @@
-Package: GWASviaDGLM
+Package: mvGWAS
 Type: Package
 Title: Uses the DGLM packge (double generalized linear model) to do a GWAS,
     assess significance of results, and plot results
