@@ -7,7 +7,12 @@
 ValidateSNPValues(snp.values, phen.df)
 }
 \arguments{
-\item{phen.df}{}
+\item{snp.values}{the snp values}
+
+\item{phen.df}{the phenotype data.frame}
+}
+\value{
+nothing if the snp values are valid, errors if they're not
 }
 \author{
 Robert W. Corty

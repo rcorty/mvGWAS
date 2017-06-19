@@ -12,7 +12,30 @@ InvestigateDGSNP(phenotype.name, snp.name, snp.values = NULL, chr = NULL,
   alpha.violin = 0.4)
 }
 \arguments{
-\item{alpha.violin}{}
+\item{phenotype.name}{name of the phenotype}
+
+\item{snp.name}{name of the snp}
+
+\item{file.names}{names of phenotype and genotype files}
+
+\item{mean.formula}{the mean formula}
+
+\item{var.formula}{the variance formula}
+
+\item{draw.violins}{should the violion plot be plotted}
+
+\item{draw.scatter}{should the scatter plot be plotted}
+
+\item{alpha.scatter}{alpha on the scatter plot}
+
+\item{alpha.violin}{alpha on the violin}
+
+\item{draw.ns}{should the n per group be plotted}
+
+\item{draw.sd.bar}{should the bars indicating the standard deviation of each genotype be plotted}
+}
+\value{
+nothing, just plots
 }
 \description{
 Model and plot to investigate a directly genotyped single

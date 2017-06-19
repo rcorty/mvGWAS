@@ -37,10 +37,10 @@ is valid when p-values are supplied.  -log10 of p-values may be provided
 in some cases, e.g. when using this plotting function in the context of
 a Shiny app that uses brushing to select a SNP.}
 
-\item{use.plotly}{}
+\item{use.plotly}{should plot be wrapped in a plotly object?}
 }
-\examples{
-
+\value{
+a plot
 }
 \author{
 Robert Corty
