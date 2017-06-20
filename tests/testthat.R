@@ -1,4 +1,4 @@
 library(testthat)
-library(GWASviaDGLM)
+library(mvGWAS)
 
-test_check("GWASviaDGLM")
+test_check("mvGWAS")
