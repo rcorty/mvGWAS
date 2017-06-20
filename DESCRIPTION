@@ -8,7 +8,7 @@ Author: Robert Corty
 Maintainer: <rcorty@gmail.com>
 Description: This GWAS approach allows for covariates to influence the
     environmental (residual) variance of individuals.
-License: GPL-3
+License: GPL-3 + file LICENSE
 LazyData: TRUE
 Depends:
     R (>= 3.1.0)
