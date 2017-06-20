@@ -202,16 +202,15 @@ mvGWAS$methods(
 #' @return nothing
 #'
 mvGWAS$methods(
-  conduct_scan_slurm_ = function(max_num_nodes, cpus_per_node = 1) {
+  conduct_scan_slurm_ = function(max_num_nodes = Inf) {
 
     genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
 
     sjob <- rslurm::slurm_apply(f = .self$scan_vcf_file,
                                 params = dplyr::data_frame(file_name = genotype_files),
-                                nodes = min(max_num_nodes, length(genotype_files)),
-                                cpus_per_node = cpus_per_node)
+                                nodes = min(max_num_nodes, length(genotype_files)))
 
-    results_list <- get_slurm_out(sjob, outtype = "raw", wait = TRUE)
+    results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 
     results <<- results_list %>% dplyr::bind_rows()
 
@@ -228,10 +227,10 @@ mvGWAS$methods(
 #' @return nothing
 #'
 mvGWAS$methods(
-  scan_vcf_file = function(filename,
+  scan_vcf_file = function(file_name,
                            drop_gts_w_fewer_than_x_obs = 5) {
 
-    vcf <- vcfR::read.vcfR(file = filename, verbose = FALSE)
+    vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
     IDs <- vcf@gt %>% colnames() %>% .[-1]
     num_snps <- dim(vcf)[1]
