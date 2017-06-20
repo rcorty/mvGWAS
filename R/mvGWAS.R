@@ -263,6 +263,7 @@ mvGWAS$methods(
         next
       }
 
+
       # if hets in both 'directions' are present, collapse them to one
       # may need to deal with '0\1' or '0/1' at some point
       if (all('0|1' %in% gts_raw, '1|0' %in% gts_raw)) {
@@ -295,6 +296,7 @@ mvGWAS$methods(
       # if we couldn't fit the alt model, move on
       if (is.null(alt_fit)) { next }
 
+      # mean test
       if ('mean_null_formula' %in% names(metadata)) {
         mean_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_null_formula,
                                             dformula = metadata$var_formula,
@@ -305,6 +307,7 @@ mvGWAS$methods(
         df_mean[snp_idx] <- df.residual(mean_null_fit) - df.residual(alt_fit)
       }
 
+      # var test
       if ('var_null_formula' %in% names(metadata)) {
         var_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_formula,
                                            dformula = metadata$var_null_formula,
@@ -315,6 +318,7 @@ mvGWAS$methods(
         df_var[snp_idx] <- df.residual(var_null_fit$dispersion.fit) - df.residual(alt_fit$dispersion.fit)
       }
 
+      # joint test
       if (all(c('mean_null_formula', 'var_null_formula') %in% names(metadata))) {
         joint_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_null_formula,
                                              dformula = metadata$var_null_formula,
@@ -330,17 +334,24 @@ mvGWAS$methods(
 
     }
 
-    res <- dplyr::data_frame(LR_mean, LR_var, LR_joint,
-                             df_mean, df_var, df_joint) %>%
-      dplyr::mutate(mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean, lower.tail = FALSE),
-                    var_asymp_p   = pchisq(q = LR_var,   df = df_var, lower.tail = FALSE),
-                    joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
+    metadata <- vcf@fix %>%
+      dplyr::as_data_frame() %>%
+      dplyr::select(-QUAL, -INFO) %>%
+      dplyr::mutate(POS = as.numeric(POS))
 
-    return(dplyr::bind_cols(vcf@fix %>%
-                              dplyr::as_data_frame() %>%
-                              dplyr::select(-QUAL, -INFO) %>%
-                              dplyr::mutate(POS = as.numeric(POS)),
-                            res))
+    result <- dplyr::data_frame(LR_mean = LR_mean,
+                             LR_var = LR_var,
+                             LR_joint = LR_joint,
+                             df_mean = df_mean,
+                             df_var = df_var,
+                             df_joint = df_joint,
+                             mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
+                             var_asymp_p   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
+                             joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
+
+
+
+    return(dplyr::bind_cols(metadata, result))
   }
 )
 
