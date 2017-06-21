@@ -28,7 +28,7 @@ test_that(
   code = {
 
     # mean, var, and joint testing with covariates in both models
-    gwas1 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas1 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_is(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
                                           var_formula = ~ EV1 + male + MAP_gt,
                                           num_cores = 1),
@@ -36,7 +36,7 @@ test_that(
     expect_is(object = gwas1$results, class = 'tbl_df')
 
     # mean testing with covariates in both models
-    gwas2 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas2 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_is(object = gwas2$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
                                           var_formula = ~ EV1 + male,
                                           num_cores = 1),
@@ -44,7 +44,7 @@ test_that(
     expect_is(object = gwas1$results, class = 'tbl_df')
 
     # var testing with covariates in both models
-    gwas3 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas3 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_is(object = gwas3$conduct_scan(mean_formula = sbp ~ EV1 + male,
                                           var_formula = ~ EV1 + male + MAP_gt,
                                           num_cores = 1),
@@ -52,15 +52,15 @@ test_that(
     expect_is(object = gwas1$results, class = 'tbl_df')
 
     # no testing with covariates in both models
-    gwas4 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas4 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_error(object = gwas4$conduct_scan(mean_formula = sbp ~ EV1 + male,
                                              var_formula = ~ EV1 + male,
                                              num_cores = 1))
-    expect_is(object = gwas4$results, class = 'uninitializedField')
+    expect_equal(object = dim(gwas4$results), c(0, 0))
 
 
     # mean, var, and joint testing with no covariates
-    gwas5 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas5 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_is(object = gwas5$conduct_scan(mean_formula = sbp ~ MAP_gt,
                                           var_formula = ~ MAP_gt,
                                           num_cores = 1),
@@ -68,7 +68,7 @@ test_that(
     expect_is(object = gwas5$results, class = 'tbl_df')
 
     # mean testing with no covariates
-    gwas6 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas6 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_is(object = gwas6$conduct_scan(mean_formula = sbp ~ MAP_gt,
                                           var_formula = ~ 1,
                                           num_cores = 1),
@@ -76,7 +76,7 @@ test_that(
     expect_is(object = gwas6$results, class = 'tbl_df')
 
     # var testing with no covariates
-    gwas7 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas7 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_is(object = gwas7$conduct_scan(mean_formula = sbp ~ 1,
                                           var_formula = ~ MAP_gt,
                                           num_cores = 1),
@@ -84,76 +84,76 @@ test_that(
     expect_is(object = gwas7$results, class = 'tbl_df')
 
     # no testing with no covariates
-    gwas8 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../../data')
+    gwas8 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_error(object = gwas8$conduct_scan(mean_formula = sbp ~ 1,
                                              var_formula = ~ 1,
                                              num_cores = 1))
-    expect_is(object = gwas8$results, class = 'uninitializedField')
+    expect_equal(object = dim(gwas8$results), c(0, 0))
   }
 )
-#
-#
-# test_that(
-#   desc = 'Conduct a multi-core local mvGWAS',
-#   code = {
-#
-#     # mean, var, and joint testing with covariates in both models
-#     gwas1 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_is(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
-#                                           var_formula = ~ EV1 + male + MAP_gt),
-#               class = 'mvGWAS')
-#     expect_is(object = gwas1$results, class = 'tbl_df')
-#
-#     # mean testing with covariates in both models
-#     gwas2 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_is(object = gwas2$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
-#                                           var_formula = ~ EV1 + male),
-#               class = 'mvGWAS')
-#     expect_is(object = gwas1$results, class = 'tbl_df')
-#
-#     # var testing with covariates in both models
-#     gwas3 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_is(object = gwas3$conduct_scan(mean_formula = sbp ~ EV1 + male,
-#                                           var_formula = ~ EV1 + male + MAP_gt),
-#               class = 'mvGWAS')
-#     expect_is(object = gwas1$results, class = 'tbl_df')
-#
-#     # no testing with covariates in both models
-#     gwas4 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_error(object = gwas4$conduct_scan(mean_formula = sbp ~ EV1 + male,
-#                                              var_formula = ~ EV1 + male))
-#     expect_is(object = gwas4$results, class = 'uninitializedField')
-#
-#
-#     # mean, var, and joint testing with no covariates
-#     gwas5 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_is(object = gwas5$conduct_scan(mean_formula = sbp ~ MAP_gt,
-#                                           var_formula = ~ MAP_gt),
-#               class = 'mvGWAS')
-#     expect_is(object = gwas5$results, class = 'tbl_df')
-#
-#     # mean testing with no covariates
-#     gwas6 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_is(object = gwas6$conduct_scan(mean_formula = sbp ~ MAP_gt,
-#                                           var_formula = ~ 1),
-#               class = 'mvGWAS')
-#     expect_is(object = gwas6$results, class = 'tbl_df')
-#
-#
-#     # var testing with no covariates
-#     gwas7 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_is(object = gwas7$conduct_scan(mean_formula = sbp ~ 1,
-#                                           var_formula = ~ MAP_gt),
-#               class = 'mvGWAS')
-#     expect_is(object = gwas7$results, class = 'tbl_df')
-#
-#     # no testing with no covariates
-#     gwas8 <- mvGWAS$new(phenotype_file = '../../data/test_phenos.RDS', genotype_directory = '../../data')
-#     expect_error(object = gwas8$conduct_scan(mean_formula = sbp ~ 1,
-#                                              var_formula = ~ 1))
-#     expect_is(object = gwas8$results, class = 'uninitializedField')
-#   }
-# )
+
+
+test_that(
+  desc = 'Conduct a multi-core local mvGWAS',
+  code = {
+
+    # mean, var, and joint testing with covariates in both models
+    gwas1 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_is(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
+                                          var_formula = ~ EV1 + male + MAP_gt),
+              class = 'mvGWAS')
+    expect_is(object = gwas1$results, class = 'tbl_df')
+
+    # mean testing with covariates in both models
+    gwas2 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_is(object = gwas2$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
+                                          var_formula = ~ EV1 + male),
+              class = 'mvGWAS')
+    expect_is(object = gwas1$results, class = 'tbl_df')
+
+    # var testing with covariates in both models
+    gwas3 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_is(object = gwas3$conduct_scan(mean_formula = sbp ~ EV1 + male,
+                                          var_formula = ~ EV1 + male + MAP_gt),
+              class = 'mvGWAS')
+    expect_is(object = gwas1$results, class = 'tbl_df')
+
+    # no testing with covariates in both models
+    gwas4 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_error(object = gwas4$conduct_scan(mean_formula = sbp ~ EV1 + male,
+                                             var_formula = ~ EV1 + male))
+    expect_equal(object = dim(gwas4$results), c(0, 0))
+
+
+    # mean, var, and joint testing with no covariates
+    gwas5 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_is(object = gwas5$conduct_scan(mean_formula = sbp ~ MAP_gt,
+                                          var_formula = ~ MAP_gt),
+              class = 'mvGWAS')
+    expect_is(object = gwas5$results, class = 'tbl_df')
+
+    # mean testing with no covariates
+    gwas6 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_is(object = gwas6$conduct_scan(mean_formula = sbp ~ MAP_gt,
+                                          var_formula = ~ 1),
+              class = 'mvGWAS')
+    expect_is(object = gwas6$results, class = 'tbl_df')
+
+
+    # var testing with no covariates
+    gwas7 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_is(object = gwas7$conduct_scan(mean_formula = sbp ~ 1,
+                                          var_formula = ~ MAP_gt),
+              class = 'mvGWAS')
+    expect_is(object = gwas7$results, class = 'tbl_df')
+
+    # no testing with no covariates
+    gwas8 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
+    expect_error(object = gwas8$conduct_scan(mean_formula = sbp ~ 1,
+                                             var_formula = ~ 1))
+    expect_equal(object = dim(gwas8$results), c(0, 0))
+  }
+)
 
 
 test_that(

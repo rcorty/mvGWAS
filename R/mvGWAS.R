@@ -13,10 +13,10 @@
 #'
 mvGWAS <- setRefClass(
   Class = 'mvGWAS',
-  fields = c('metadata',
-             'data',
-             'intermediates',
-             'results'))
+  fields = list(metadata = 'list',
+                data = 'list',
+                intermediataes = 'list',
+                results = 'data.frame'))
 
 
 
@@ -74,150 +74,6 @@ mvGWAS$methods(
 )
 
 
-#' @title conduct_scan
-#' @name mvGWAS_conduct_scan
-#'
-#' @param mean_formula the mean formula
-#' @param var_formula the variance formula
-#' @param computer Either 'local' (default) or 'slurm'. Should the scan be conducted on the local machine or on a slurm cluster.
-#'
-#' @description conducts an mvGWAS
-#'
-#' @return the mvGWAS object  (change this?)
-#'
-mvGWAS$methods(
-  conduct_scan = function(mean_formula,
-                          var_formula,
-                          system = c('local', 'slurm'),
-                          ...) {
-
-    system <- match.arg(arg = system)
-
-    .self$stash_formula_(formula = mean_formula, type = 'mean')
-    .self$stash_formula_(formula = var_formula, type = 'var')
-
-    if (!any(grepl(pattern = 'null_formula', x = names(metadata)))) {
-      stop('Use MAP_gt in at least one of mean_formula or var_formula.')
-    }
-
-    switch(EXPR = system,
-           'local' = .self$conduct_scan_local_(...),
-           'slurm' = .self$conduct_scan_slurm_(...))
-
-    return(.self)
-
-  }
-)
-
-
-
-#' @title stash_formula_
-#' @name mvGWAS_internals
-#'
-#' @param formula the formula to validate
-#' @param type one of 'mean' or 'var'
-#'
-#' @description validates a formula and stashes it for use in an mvGWAS
-#'
-#' @return nothing
-#'
-mvGWAS$methods(
-  stash_formula_ = function(formula, type = c('mean', 'var')) {
-
-    type <- match.arg(arg = type)
-
-    stopifnot(inherits(x = formula, 'formula'))
-    stopifnot(length(formula) == switch(EXPR = type, mean = 3, var = 2))
-    stopifnot(all.vars(expr = formula) %in% c(names(data$phenotypes), 'MAP_gt'))  # todo: add other gt info -- dosage and genoprobs
-
-    metadata[[paste0(type, '_formula')]] <<- formula
-
-    rhs <- formula[[switch(EXPR = type, mean = 3, var = 2)]]
-    rhs_vars <- all.vars(rhs)
-    special_term_idxs <- grep(pattern = 'MAP_gt', x = rhs_vars)
-
-    if (any(special_term_idxs)) {
-
-      # corner case where there are no non-special RHS terms
-      if (length(special_term_idxs) == length(rhs_vars)) {
-
-        null_formula <- stats::reformulate(termlabels = '1',
-                                           response = switch(EXPR = type,
-                                                             mean = formula[[2]],
-                                                             var = NULL))
-
-        # typical case
-      } else {
-
-        null_formula <- stats::formula(x = stats::drop.terms(termobj = stats::terms(formula),
-                                                             dropx = special_term_idxs,
-                                                             keep.response = switch(EXPR = type,
-                                                                                    mean = TRUE,
-                                                                                    var = FALSE)))
-
-      }
-
-      metadata[[paste0(type, '_null_formula')]] <<- null_formula
-
-    }
-  }
-)
-
-
-
-#' @title conduct_scan_local_
-#' @name mvGWAS_internals
-#'
-#' @param num_cores the number of cores to use, defaults to parallel::detectCores()
-#'
-#' @description conducts a genome scan locally
-#'
-#' @return nothing
-#'
-mvGWAS$methods(
-  conduct_scan_local_ = function(num_cores = parallel::detectCores()) {
-
-    genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
-
-    #this should be mclapply
-    if (num_cores == 1) {
-      results_list <- lapply(X = genotype_files,
-                             FUN = .self$scan_vcf_file)
-    } else {
-      results_list <- parallel::mclapply(X = genotype_files,
-                                         FUN = .self$scan_vcf_file)
-    }
-
-    results <<- results_list %>% dplyr::bind_rows()
-  }
-)
-
-
-
-#' @title conduct_scan_slurm_
-#' @name mvGWAS_internals
-#'
-#' @description conducts a genome scan on a slurm cluster
-#'
-#' @return nothing
-#'
-mvGWAS$methods(
-  conduct_scan_slurm_ = function(max_num_nodes = Inf) {
-
-    genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
-
-    sjob <- rslurm::slurm_apply(f = .self$scan_vcf_file,
-                                params = dplyr::data_frame(file_name = genotype_files),
-                                nodes = min(max_num_nodes, length(genotype_files)))
-
-    results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
-
-    results <<- results_list %>% dplyr::bind_rows()
-
-  }
-)
-
-
 
 #' @title scan_vcf_file_
 #' @name mvGWAS_internals_
@@ -227,8 +83,8 @@ mvGWAS$methods(
 #' @return nothing
 #'
 mvGWAS$methods(
-  scan_vcf_file = function(file_name,
-                           drop_gts_w_fewer_than_x_obs = 5) {
+  scan_vcf_file_ = function(file_name,
+                            drop_gts_w_fewer_than_x_obs = 5) {
 
     vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
@@ -334,28 +190,176 @@ mvGWAS$methods(
 
     }
 
-    metadata <- vcf@fix %>%
+    fix_df <- vcf@fix %>%
       dplyr::as_data_frame() %>%
       dplyr::select(-QUAL, -INFO) %>%
       dplyr::mutate(POS = as.numeric(POS))
 
     result <- dplyr::data_frame(LR_mean = LR_mean,
-                             LR_var = LR_var,
-                             LR_joint = LR_joint,
-                             df_mean = df_mean,
-                             df_var = df_var,
-                             df_joint = df_joint,
-                             mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
-                             var_asymp_p   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
-                             joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
+                                LR_var = LR_var,
+                                LR_joint = LR_joint,
+                                df_mean = df_mean,
+                                df_var = df_var,
+                                df_joint = df_joint,
+                                mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
+                                var_asymp_p   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
+                                joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
 
 
-
-    return(dplyr::bind_cols(metadata, result))
+    return(dplyr::bind_cols(fix_df, result))
   }
 )
 
 
+#' @title stash_formula_
+#' @name mvGWAS_internals
+#'
+#' @param formula the formula to validate
+#' @param type one of 'mean' or 'var'
+#'
+#' @description validates a formula and stashes it for use in an mvGWAS
+#'
+#' @return nothing
+#'
+mvGWAS$methods(
+  stash_formula_ = function(formula, type = c('mean', 'var')) {
+
+    type <- match.arg(arg = type)
+
+    stopifnot(inherits(x = formula, 'formula'))
+    stopifnot(length(formula) == switch(EXPR = type, mean = 3, var = 2))
+    stopifnot(all.vars(expr = formula) %in% c(names(data$phenotypes), 'MAP_gt'))  # todo: add other gt info -- dosage and genoprobs
+
+    metadata[[paste0(type, '_formula')]] <<- formula
+
+    rhs <- formula[[switch(EXPR = type, mean = 3, var = 2)]]
+    rhs_vars <- all.vars(rhs)
+    special_term_idxs <- grep(pattern = 'MAP_gt', x = rhs_vars)
+
+    if (any(special_term_idxs)) {
+
+      # corner case where there are no non-special RHS terms
+      if (length(special_term_idxs) == length(rhs_vars)) {
+
+        null_formula <- stats::reformulate(termlabels = '1',
+                                           response = switch(EXPR = type,
+                                                             mean = formula[[2]],
+                                                             var = NULL))
+
+        # typical case
+      } else {
+
+        null_formula <- stats::formula(x = stats::drop.terms(termobj = stats::terms(formula),
+                                                             dropx = special_term_idxs,
+                                                             keep.response = switch(EXPR = type,
+                                                                                    mean = TRUE,
+                                                                                    var = FALSE)))
+
+      }
+
+      metadata[[paste0(type, '_null_formula')]] <<- null_formula
+
+    }
+  }
+)
+
+
+
+#' @title conduct_scan_local_
+#' @name mvGWAS_internals
+#'
+#' @param num_cores the number of cores to use, defaults to parallel::detectCores()
+#'
+#' @description conducts a genome scan locally
+#'
+#' @return nothing
+#'
+mvGWAS$methods(
+  conduct_scan_local_ = function(num_cores = parallel::detectCores()) {
+
+    usingMethods(scan_vcf_file_)
+
+    genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
+
+    #this should be mclapply
+    if (num_cores == 1) {
+      results_list <- lapply(X = genotype_files,
+                             FUN = scan_vcf_file_)
+    } else {
+      results_list <- parallel::mclapply(X = genotype_files,
+                                         FUN = scan_vcf_file_)
+    }
+
+    results <<- results_list %>% dplyr::bind_rows()
+  }
+)
+
+
+
+
+#' @title conduct_scan_slurm_
+#' @name mvGWAS_internals
+#'
+#' @description conducts a genome scan on a slurm cluster
+#'
+#' @return nothing
+#'
+mvGWAS$methods(
+  conduct_scan_slurm_ = function(max_num_nodes = Inf) {
+
+    usingMethods(scan_vcf_file_)
+
+    genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
+
+    sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
+                                params = dplyr::data_frame(file_name = genotype_files),
+                                nodes = min(max_num_nodes, length(genotype_files)),
+                                add_objects = eval(.self))
+
+    results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
+
+    results <<- results_list %>% dplyr::bind_rows()
+
+  }
+)
+
+
+#' @title conduct_scan
+#' @name mvGWAS_conduct_scan
+#'
+#' @param mean_formula the mean formula
+#' @param var_formula the variance formula
+#' @param computer Either 'local' (default) or 'slurm'. Should the scan be conducted on the local machine or on a slurm cluster.
+#'
+#' @description conducts an mvGWAS
+#'
+#' @return the mvGWAS object  (change this?)
+#'
+mvGWAS$methods(
+  conduct_scan = function(mean_formula,
+                          var_formula,
+                          system = c('local', 'slurm'),
+                          ...) {
+
+    usingMethods(stash_formula_, conduct_scan_local_, conduct_scan_slurm_)
+
+    system <- match.arg(arg = system)
+
+    stash_formula_(formula = mean_formula, type = 'mean')
+    stash_formula_(formula = var_formula, type = 'var')
+
+    if (!any(grepl(pattern = 'null_formula', x = names(metadata)))) {
+      stop('Use MAP_gt in at least one of mean_formula or var_formula.')
+    }
+
+    switch(EXPR = system,
+           'local' = conduct_scan_local_(...),
+           'slurm' = conduct_scan_slurm_(...))
+
+    return(.self)
+
+  }
+)
 
 
 

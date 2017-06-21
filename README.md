@@ -1,9 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-GWASviaDGLM
-===========
+mvGWAS
+======
 
-The goal of GWASviaDGLM is to provide an easy-to-use interface for geneticists to conduct an mvGWAS -- a mean-variance genome wide association study. This study tests all the loci in the genome for association with the mean and variance of a phenotype.
+The goal of the mvGWAS package is to provide an easy-to-use interface for geneticists to conduct a mean-variance genome wide association study. This study tests all the loci in the genome for association with the mean and variance of a phenotype.
 
 At each locus, there are three questions (equivalently, three null hypotheses to test).
 
