@@ -30,6 +30,8 @@ mvGWAS <- setRefClass(
 #'
 #' @return an mvGWAS object
 #'
+#' @importFrom dplyr %>%
+#'
 mvGWAS$methods(
   initialize = function(phenotype_file,
                         genotype_directory) {
@@ -75,141 +77,6 @@ mvGWAS$methods(
 
 
 
-#' @title scan_vcf_file_
-#' @name mvGWAS_internals_
-#'
-#' @rdname mvGWAS_internals
-#'
-#' @return nothing
-#'
-mvGWAS$methods(
-  scan_vcf_file_ = function(file_name,
-                            drop_gts_w_fewer_than_x_obs = 5) {
-
-    vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
-
-    IDs <- vcf@gt %>% colnames() %>% .[-1]
-    num_snps <- dim(vcf)[1]
-    num_indivs <- length(IDs)
-    LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
-    df_mean <- df_var <- df_joint <- rep(NA, num_snps)
-    gts_raw <- rep(0, num_indivs)
-
-    for (snp_idx in 1:num_snps) {
-
-      # drop FORMAT columns
-      snp <- vcf@gt[snp_idx, -1]
-
-      # pull out first column...may want to check in FORMAT column that MAP_gt is first
-      last_gts <- gts_raw
-      gts_raw <- stringr::str_split(string = snp, pattern = ':', simplify = TRUE)[,1]
-
-      # if no genetic variation at this locus, move on
-      if (length(unique(gts_raw)) == 1) { next }
-
-      # if this snp is exactly the same as the last one, move on
-      # may want to move on if it even creates the same grouping?
-      if (all(last_gts == gts_raw)) {
-        LR_mean[snp_idx]  <- LR_mean[snp_idx - 1]
-        LR_var[snp_idx]   <- LR_var[snp_idx - 1]
-        LR_joint[snp_idx] <- LR_joint[snp_idx - 1]
-        df_mean[snp_idx] <- df_mean[snp_idx - 1]
-        df_var[snp_idx] <- df_var[snp_idx - 1]
-        df_joint[snp_idx] <- df_joint[snp_idx - 1]
-        next
-      }
-
-
-      # if hets in both 'directions' are present, collapse them to one
-      # may need to deal with '0\1' or '0/1' at some point
-      if (all('0|1' %in% gts_raw, '1|0' %in% gts_raw)) {
-        gts <- replace(x = gts_raw, list = gts_raw == '1|0', values = '0|1')
-      } else {
-        gts <- gts_raw
-      }
-
-      # if there's any very rare GT, drop it
-      if (any(table(gts) < drop_gts_w_fewer_than_x_obs)) {
-        bad_gts <- names(table(gts))[table(gts) < drop_gts_w_fewer_than_x_obs]
-        gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
-      }
-
-      # if there's only one level, move on
-      # have to check again after possibly dropping a rare GT
-      if (length(unique(gts)) == 1) { next }
-
-      # after all that checking and pruning, finally turn gts into factor
-      gts <- factor(gts)
-
-      this_locus_df <- data$phenotypes
-      this_locus_df[['MAP_gt']] <- gts[match(x = IDs, table = data$phenotypes[[1]])]
-      this_locus_df <- na.omit(object = this_locus_df)
-
-      alt_fit <- tryNULL(dglm::dglm(formula = metadata$mean_formula,
-                                    dformula = metadata$var_formula,
-                                    data = this_locus_df))
-
-      # if we couldn't fit the alt model, move on
-      if (is.null(alt_fit)) { next }
-
-      # mean test
-      if ('mean_null_formula' %in% names(metadata)) {
-        mean_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_null_formula,
-                                            dformula = metadata$var_formula,
-                                            data = this_locus_df))
-
-        if (is.null(mean_null_fit)) { next }
-        LR_mean[snp_idx] <- mean_null_fit$m2loglik - alt_fit$m2loglik
-        df_mean[snp_idx] <- df.residual(mean_null_fit) - df.residual(alt_fit)
-      }
-
-      # var test
-      if ('var_null_formula' %in% names(metadata)) {
-        var_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_formula,
-                                           dformula = metadata$var_null_formula,
-                                           data = this_locus_df))
-
-        if (is.null(var_null_fit)) { next }
-        LR_var[snp_idx] <- var_null_fit$m2loglik - alt_fit$m2loglik
-        df_var[snp_idx] <- df.residual(var_null_fit$dispersion.fit) - df.residual(alt_fit$dispersion.fit)
-      }
-
-      # joint test
-      if (all(c('mean_null_formula', 'var_null_formula') %in% names(metadata))) {
-        joint_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_null_formula,
-                                             dformula = metadata$var_null_formula,
-                                             data = this_locus_df))
-
-        if (is.null(joint_null_fit)) { next }
-        LR_joint[snp_idx] <- joint_null_fit$m2loglik - alt_fit$m2loglik
-        df_joint[snp_idx] <- df.residual(mean_null_fit) +
-          df.residual(var_null_fit$dispersion.fit) -
-          df.residual(alt_fit) -
-          df.residual(alt_fit$dispersion.fit)
-      }
-
-    }
-
-    fix_df <- vcf@fix %>%
-      dplyr::as_data_frame() %>%
-      dplyr::select(-QUAL, -INFO) %>%
-      dplyr::mutate(POS = as.numeric(POS))
-
-    result <- dplyr::data_frame(LR_mean = LR_mean,
-                                LR_var = LR_var,
-                                LR_joint = LR_joint,
-                                df_mean = df_mean,
-                                df_var = df_var,
-                                df_joint = df_joint,
-                                mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
-                                var_asymp_p   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
-                                joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
-
-
-    return(dplyr::bind_cols(fix_df, result))
-  }
-)
-
 
 #' @title stash_formula_
 #' @name mvGWAS_internals
@@ -241,25 +108,24 @@ mvGWAS$methods(
       # corner case where there are no non-special RHS terms
       if (length(special_term_idxs) == length(rhs_vars)) {
 
-        null_formula <- stats::reformulate(termlabels = '1',
-                                           response = switch(EXPR = type,
-                                                             mean = formula[[2]],
-                                                             var = NULL))
+        r <- switch(EXPR = type, mean = formula[[2]], var = NULL)
+        null_formula <- stats::reformulate(termlabels = '1', response = r)
 
         # typical case
       } else {
 
+        kr <- switch(EXPR = type, mean = TRUE, var = FALSE)
         null_formula <- stats::formula(x = stats::drop.terms(termobj = stats::terms(formula),
                                                              dropx = special_term_idxs,
-                                                             keep.response = switch(EXPR = type,
-                                                                                    mean = TRUE,
-                                                                                    var = FALSE)))
+                                                             keep.response = kr))
 
       }
-
-      metadata[[paste0(type, '_null_formula')]] <<- null_formula
-
+    } else {
+      null_formula <- NULL
     }
+
+    metadata[[paste0(type, '_null_formula')]] <<- null_formula
+
   }
 )
 
@@ -277,17 +143,25 @@ mvGWAS$methods(
 mvGWAS$methods(
   conduct_scan_local_ = function(num_cores = parallel::detectCores()) {
 
-    usingMethods(scan_vcf_file_)
-
     genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
 
-    #this should be mclapply
+    # better to use lapply if num_cores == 1 bc user doesn't have to install parallel
     if (num_cores == 1) {
       results_list <- lapply(X = genotype_files,
-                             FUN = scan_vcf_file_)
+                             FUN = scan_vcf_file_,
+                             mean_formula = mean_formula,
+                             var_formula = var_formula,
+                             mean_null_formula = mean_null_formula,
+                             var_null_formula = var_null_formula,
+                             phenotype_df = data$phenotypes)
     } else {
       results_list <- parallel::mclapply(X = genotype_files,
-                                         FUN = scan_vcf_file_)
+                                         FUN = scan_vcf_file_,
+                                         mean_formula = mean_formula,
+                                         var_formula = var_formula,
+                                         mean_null_formula = mean_null_formula,
+                                         var_null_formula = var_null_formula,
+                                         phenotype_df = data$phenotypes)
     }
 
     results <<- results_list %>% dplyr::bind_rows()
@@ -307,13 +181,16 @@ mvGWAS$methods(
 mvGWAS$methods(
   conduct_scan_slurm_ = function(max_num_nodes = Inf) {
 
-    usingMethods(scan_vcf_file_)
-
     genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
 
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
                                 params = dplyr::data_frame(file_name = genotype_files),
-                                nodes = min(max_num_nodes, length(genotype_files)))
+                                nodes = min(max_num_nodes, length(genotype_files)),
+                                add_objects = c(.self$metadata$mean_formula,
+                                                .self$metadata$var_formula,
+                                                .self$metadata$mean_nullformula,
+                                                .self$metadata$var_nullformula,
+                                                .self$data$phenotypes))
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 

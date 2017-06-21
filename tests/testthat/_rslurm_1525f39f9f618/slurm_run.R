@@ -1,80 +1,13 @@
-#' @title tryNA
-#' @description silently get what you can out of an expression
-#'
-#' @param expr the expression to try to evaluate
-#'
-#' @return If the expression evaluates without error, the evaluated expression.
-#' If there is an error in evaluating the expression, NA.
-#' Warnings are suppresssed.
-#'
-#' @export
-#'
-tryNA <- function(expr) {
-  suppressWarnings(tryCatch(expr = expr,
-                            error = function(e) NA,
-                            finally = NA))
-}
-
-
-#' @title tryNULL
-#' @description silently get what you can out of an expression
-#'
-#' @param expr the expression to try to evaluate
-#'
-#' @return If the expression evaluates without error, the evaluated expression.
-#' If there is an error in evaluating the expression, NULL.
-#' Warnings are suppresssed.
-#'
-#' @export
-#'
-tryNULL <- function(expr) {
-  suppressWarnings(tryCatch(expr = expr,
-                            error = function(e) NULL,
-                            finally = NULL))
-}
-
-
-
-# clarify_gts <- function(gts, drop_gts_w_fewer_than_x_obs) {
-#
-#   # if hets in both 'directions' are present, collapse them to one
-#   # may need to deal with '0\1' or '0/1' at some point
-#   if (all('0|1' %in% gts, '1|0' %in% gts_raw)) {
-#     gts <- replace(x = gts, list = gts == '1|0', values = '0|1')
-#   }
-#
-#   # if there's any very rare GT, drop it
-#   if (any(table(gts) < drop_gts_w_fewer_than_x_obs)) {
-#     bad_gts <- names(table(gts))[table(gts) < drop_gts_w_fewer_than_x_obs]
-#     gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
-#   }
-#
-#   # if there's only one level, move on
-#   # have to check again after possibly dropping a rare GT
-#   if (length(unique(gts)) == 1) { return(NULL) }
-#
-#   # after all that checking and pruning, finally turn gts into factor
-#   gts <- factor(gts)
-# }
-
-
-
-#' @title scan_vcf_file_
-#' @name mvGWAS_internals_
-#'
-#' @rdname mvGWAS_internals
-#'
-#' @return nothing
-#'
-scan_vcf_file_ <-  function(file_name,
+.tmplib <- lapply(c('base','methods','datasets','utils','grDevices','graphics','stats','mvGWAS'), 
+                  library, character.only = TRUE, quietly = TRUE)
+load('add_objects.RData')
+.rslurm_func <- function(file_name,
                             mean_formula,
                             var_formula,
                             mean_null_formula,
                             var_null_formula,
                             phenotype_df,
                             drop_gts_w_fewer_than_x_obs = 5) {
-
-  message('Started scan_vcf_file_')
 
   vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
@@ -84,8 +17,6 @@ scan_vcf_file_ <-  function(file_name,
   LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
   df_mean <- df_var <- df_joint <- rep(NA, num_snps)
   gts_raw <- rep(0, num_indivs)
-
-  message('Started for loop over SNPs')
 
   for (snp_idx in 1:num_snps) {
 
@@ -179,7 +110,6 @@ scan_vcf_file_ <-  function(file_name,
     }
 
   }
-  message('Finished for loop over SNPs')
 
   fix_df <- vcf@fix %>%
     dplyr::as_data_frame() %>%
@@ -199,4 +129,14 @@ scan_vcf_file_ <-  function(file_name,
 
   return(dplyr::bind_cols(fix_df, result))
 }
+<environment: namespace:mvGWAS>
 
+.rslurm_params <- readRDS('params.RDS')
+.rslurm_id <- as.numeric(Sys.getenv('SLURM_ARRAY_TASK_ID'))
+.rslurm_istart <- .rslurm_id * 2 + 1
+.rslurm_iend <- min((.rslurm_id + 1) * 2, nrow(.rslurm_params))
+.rslurm_result <- do.call(parallel::mcMap, c(.rslurm_func,
+    .rslurm_params[.rslurm_istart:.rslurm_iend, , drop = FALSE],
+    mc.cores = 2))
+               
+saveRDS(.rslurm_result, file = paste0('results_', .rslurm_id, '.RDS'))
