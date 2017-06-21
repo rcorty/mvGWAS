@@ -183,14 +183,25 @@ mvGWAS$methods(
 
     genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
 
+    mean_formula = .self$metadata$mean_formula
+    var_formula = .self$metadata$var_formula
+    mean_null_formula = .self$metadata$mean_null_formula
+    var_null_formula = .self$metadata$var_null_formula
+    phenotype_df = .self$data$phenotypes
+
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
                                 params = dplyr::data_frame(file_name = genotype_files),
                                 nodes = min(max_num_nodes, length(genotype_files)),
-                                add_objects = c(.self$metadata$mean_formula,
-                                                .self$metadata$var_formula,
-                                                .self$metadata$mean_nullformula,
-                                                .self$metadata$var_nullformula,
-                                                .self$data$phenotypes))
+                                cpus_per_node = 1,
+                                add_objects = list(mean_formula = mean_formula,
+                                                   var_formula = var_formula,
+                                                   mean_null_formula = mean_null_formula,
+                                                   var_null_formula = var_null_formula,
+                                                   phenotype_df = phenotype_df))
+
+
+
+
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 
@@ -236,7 +247,6 @@ mvGWAS$methods(
 
   }
 )
-
 
 
 

@@ -8,8 +8,7 @@
 \alias{scan_vcf_file_}
 \title{stash_formula_}
 \usage{
-scan_vcf_file_(file_name, mean_formula, var_formula, mean_null_formula,
-  var_null_formula, phenotype_df, drop_gts_w_fewer_than_x_obs = 5)
+scan_vcf_file_(file_name, drop_gts_w_fewer_than_x_obs = 5)
 }
 \arguments{
 \item{formula}{the formula to validate}

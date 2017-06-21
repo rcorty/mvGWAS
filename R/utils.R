@@ -66,15 +66,14 @@ tryNULL <- function(expr) {
 #'
 #' @return nothing
 #'
+#' @importFrom dplyr %>%
+#'
 scan_vcf_file_ <-  function(file_name,
-                            mean_formula,
-                            var_formula,
-                            mean_null_formula,
-                            var_null_formula,
-                            phenotype_df,
                             drop_gts_w_fewer_than_x_obs = 5) {
 
   message('Started scan_vcf_file_')
+
+  attach(add_objects)
 
   vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
