@@ -313,8 +313,7 @@ mvGWAS$methods(
 
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
                                 params = dplyr::data_frame(file_name = genotype_files),
-                                nodes = min(max_num_nodes, length(genotype_files)),
-                                add_objects = eval(.self))
+                                nodes = min(max_num_nodes, length(genotype_files)))
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 
