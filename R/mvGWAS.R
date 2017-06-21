@@ -30,6 +30,8 @@ mvGWAS <- setRefClass(
 #'
 #' @return an mvGWAS object
 #'
+#' @importFrom dplyr %>%
+#'
 mvGWAS$methods(
   initialize = function(phenotype_file,
                         genotype_directory) {
@@ -305,15 +307,19 @@ mvGWAS$methods(
 #' @return nothing
 #'
 mvGWAS$methods(
-  conduct_scan_slurm_ = function(max_num_nodes = Inf) {
+  conduct_scan_slurm_ = function(max_num_nodes = Inf, ...) {
 
     usingMethods(scan_vcf_file_)
 
     genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
 
+    browser()
+
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
                                 params = dplyr::data_frame(file_name = genotype_files),
-                                nodes = min(max_num_nodes, length(genotype_files)))
+                                nodes = min(max_num_nodes, length(genotype_files)),
+                                cpus_per_node = 1,
+                                ...)
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 

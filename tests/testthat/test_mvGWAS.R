@@ -164,8 +164,7 @@ test_that(
     gwas1 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_is(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
                                           var_formula = ~ EV1 + male + MAP_gt,
-                                          system = 'slurm',
-                                          max_num_nodes = 20),
+                                          system = 'slurm'),
               class = 'mvGWAS')
     expect_is(object = gwas1$results, class = 'tbl_df')
   }
