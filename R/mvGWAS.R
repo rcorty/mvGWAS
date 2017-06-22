@@ -15,7 +15,7 @@ mvGWAS <- setRefClass(
   Class = 'mvGWAS',
   fields = list(metadata = 'list',
                 data = 'list',
-                intermediataes = 'list',
+                intermediates = 'list',
                 results = 'data.frame'))
 
 
@@ -83,6 +83,8 @@ mvGWAS$methods(
 #' @rdname mvGWAS_internals
 #'
 #' @return nothing
+#'
+#' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
   scan_vcf_file_ = function(file_name,
@@ -367,7 +369,7 @@ mvGWAS$methods(
            'local' = conduct_scan_local_(...),
            'slurm' = conduct_scan_slurm_(...))
 
-    return(.self)
+    return(TRUE)
 
   }
 )
