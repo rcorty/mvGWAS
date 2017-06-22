@@ -4,6 +4,7 @@
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
+\alias{mvGWAS_internals}
 \alias{mvGWAS_internals_}
 \alias{scan_vcf_file_}
 \title{stash_formula_}
@@ -25,9 +26,13 @@ nothing
 nothing
 
 nothing
+
+nothing
 }
 \description{
 validates a formula and stashes it for use in an mvGWAS
+
+determines which keywords are used in mean_formula and var_formula
 
 conducts a genome scan locally
 
