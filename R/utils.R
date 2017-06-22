@@ -120,10 +120,10 @@ scan_vcf_file_ <-  function(file_name,
     }
 
     # if there's any very rare GT, drop it
-    # if (any(table(gts) < drop_gts_w_fewer_than_x_obs)) {
-    #   bad_gts <- names(table(gts))[table(gts) < drop_gts_w_fewer_than_x_obs]
-    #   gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
-    # }
+    if (any(table(gts) < drop_gts_w_fewer_than_x_obs)) {
+      bad_gts <- names(table(gts))[table(gts) < drop_gts_w_fewer_than_x_obs]
+      gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
+    }
 
     # if there's only one level, move on
     # have to check again after possibly dropping a rare GT
