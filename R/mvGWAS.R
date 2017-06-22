@@ -78,6 +78,25 @@ mvGWAS$methods(
 )
 
 
+#' @title determine_keyword_use_
+#' @name mvGWAS_internals
+#'
+#' @description determines which keywords are used in mean_formula and var_formula
+#'
+#' @return nothing
+#'
+mvGWAS$methods(
+  determine_keyword_use_ = function(mean_formula, var_formula) {
+
+    used_keyword_idxs <- metadata$available_keywords %in% c(all.vars(mean_formula), all.vars(var_formula))
+
+    if (!any(used_keyword_idxs)) { stop(paste0("Use at least one keyword in at least one 'mean_formula' and 'var_formula'. Keywords are: (", paste(metadata$available_keywords, collapse = ', '), ").")) }
+
+    metadata$used_keywords <<- metadata$available_keywords[used_keyword_idxs]
+
+  }
+)
+
 
 #' @title scan_vcf_file_
 #' @name mvGWAS_internals_
