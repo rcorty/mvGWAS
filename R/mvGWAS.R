@@ -68,7 +68,8 @@ mvGWAS$methods(
 
     metadata <<- list(created_at = Sys.time(),
                       phenotype_file = phenotype_file,
-                      genotype_directory = genotype_directory)
+                      genotype_directory = genotype_directory,
+                      available_keywords = c('GT', 'DS', 'GP'))
 
     data <<- list(phenotypes = phenotypes)
 
@@ -95,39 +96,63 @@ mvGWAS$methods(
 
     stopifnot(inherits(x = formula, 'formula'))
     stopifnot(length(formula) == switch(EXPR = type, mean = 3, var = 2))
-    stopifnot(all.vars(expr = formula) %in% c(names(data$phenotypes), 'MAP_gt'))  # todo: add other gt info -- dosage and genoprobs
+    stopifnot(all.vars(expr = formula) %in% c(names(data$phenotypes), metadata$available_keywords))
 
     metadata[[paste0(type, '_formula')]] <<- formula
 
     rhs <- formula[[switch(EXPR = type, mean = 3, var = 2)]]
     rhs_vars <- all.vars(rhs)
-    special_term_idxs <- grep(pattern = 'MAP_gt', x = rhs_vars)
+    keyword_idxs <- grep(pattern = paste(metadata$available_keywords, collapse = '|'), x = rhs_vars)
 
-    if (any(special_term_idxs)) {
+    # remove keywords (the words used to refer to the locus) to create null formula
+    if (any(keyword_idxs)) {
 
       # corner case where there are no non-special RHS terms
-      if (length(special_term_idxs) == length(rhs_vars)) {
+      if (length(keyword_idxs) == length(rhs_vars)) {
 
         r <- switch(EXPR = type, mean = formula[[2]], var = NULL)
         null_formula <- stats::reformulate(termlabels = '1', response = r)
 
-        # typical case
+      # typical case
       } else {
 
         kr <- switch(EXPR = type, mean = TRUE, var = FALSE)
         null_formula <- stats::formula(x = stats::drop.terms(termobj = stats::terms(formula),
-                                                             dropx = special_term_idxs,
+                                                             dropx = keyword_idxs,
                                                              keep.response = kr))
 
       }
     } else {
+
       null_formula <- NULL
+
     }
 
     metadata[[paste0(type, '_null_formula')]] <<- null_formula
 
   }
 )
+
+
+
+
+
+#' @title determine_keyword_use_
+#' @name mvGWAS_internals
+#'
+#' @description determines which keywords are used in mean_formula and var_formula
+#'
+#' @return nothing
+#'
+mvGWAS$methods(
+  determine_keyword_use_ = function() {
+
+    used_keyword_idxs <- metadata$available_keywords %in% c(all.vars(metadata$mean_formula), all.vars(metadata$var_formula))
+    metadata$used_keywords <<- metadata$available_keywords[used_keyword_idxs]
+
+  }
+)
+
 
 
 
@@ -145,23 +170,14 @@ mvGWAS$methods(
 
     genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
 
-    # better to use lapply if num_cores == 1 bc user doesn't have to install parallel
+    # better to use lapply directly if num_cores == 1 rather than let parallel::mclapply call it
+    # bc user likely doesn't have parallel package installed
     if (num_cores == 1) {
       results_list <- lapply(X = genotype_files,
-                             FUN = scan_vcf_file_,
-                             mean_formula = mean_formula,
-                             var_formula = var_formula,
-                             mean_null_formula = mean_null_formula,
-                             var_null_formula = var_null_formula,
-                             phenotype_df = data$phenotypes)
+                             FUN = scan_vcf_file_)
     } else {
       results_list <- parallel::mclapply(X = genotype_files,
-                                         FUN = scan_vcf_file_,
-                                         mean_formula = mean_formula,
-                                         var_formula = var_formula,
-                                         mean_null_formula = mean_null_formula,
-                                         var_null_formula = var_null_formula,
-                                         phenotype_df = data$phenotypes)
+                                         FUN = scan_vcf_file_)
     }
 
     results <<- results_list %>% dplyr::bind_rows()
@@ -200,9 +216,6 @@ mvGWAS$methods(
                                                    phenotype_df = phenotype_df))
 
 
-
-
-
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 
     results <<- results_list %>% dplyr::bind_rows()
@@ -228,12 +241,14 @@ mvGWAS$methods(
                           system = c('local', 'slurm'),
                           ...) {
 
-    usingMethods(stash_formula_, conduct_scan_local_, conduct_scan_slurm_)
+    usingMethods(stash_formula_, determine_keyword_use_, conduct_scan_local_, conduct_scan_slurm_)
 
     system <- match.arg(arg = system)
 
     stash_formula_(formula = mean_formula, type = 'mean')
     stash_formula_(formula = var_formula, type = 'var')
+
+    determine_keyword_use_()
 
     if (!any(grepl(pattern = 'null_formula', x = names(metadata)))) {
       stop('Use MAP_gt in at least one of mean_formula or var_formula.')
