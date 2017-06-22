@@ -35,27 +35,6 @@ tryNULL <- function(expr) {
 
 
 
-# clarify_gts <- function(gts, drop_gts_w_fewer_than_x_obs) {
-#
-#   # if hets in both 'directions' are present, collapse them to one
-#   # may need to deal with '0\1' or '0/1' at some point
-#   if (all('0|1' %in% gts, '1|0' %in% gts_raw)) {
-#     gts <- replace(x = gts, list = gts == '1|0', values = '0|1')
-#   }
-#
-#   # if there's any very rare GT, drop it
-#   if (any(table(gts) < drop_gts_w_fewer_than_x_obs)) {
-#     bad_gts <- names(table(gts))[table(gts) < drop_gts_w_fewer_than_x_obs]
-#     gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
-#   }
-#
-#   # if there's only one level, move on
-#   # have to check again after possibly dropping a rare GT
-#   if (length(unique(gts)) == 1) { return(NULL) }
-#
-#   # after all that checking and pruning, finally turn gts into factor
-#   gts <- factor(gts)
-# }
 
 
 
