@@ -30,14 +30,14 @@ test_that(
     # mean, var, and joint testing with covariates in both models
     gwas1 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_true(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + GT,
-                                            var_formula = ~ EV1 + male + GT,
+                                            var_formula = ~ EV1 + male + GP,
                                             num_cores = 1))
     expect_is(object = gwas1$results, class = 'tbl_df')
 
 
     # mean, var, and joint testing with no covariates
     gwas5 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
-    expect_true(object = gwas5$conduct_scan(mean_formula = sbp ~ GT,
+    expect_true(object = gwas5$conduct_scan(mean_formula = sbp ~ DS,
                                             var_formula = ~ GT,
                                             num_cores = 1))
     expect_is(object = gwas5$results, class = 'tbl_df')
@@ -52,7 +52,7 @@ test_that(
 
     # mean, var, and joint testing with covariates in both models
     gwas1 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
-    expect_true(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + GT,
+    expect_true(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + GP,
                                             var_formula = ~ EV1 + male + GT))
     expect_is(object = gwas1$results, class = 'tbl_df')
 
@@ -66,7 +66,7 @@ test_that(
     # mean, var, and joint testing with no covariates
     gwas5 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
     expect_true(object = gwas5$conduct_scan(mean_formula = sbp ~ GT,
-                                            var_formula = ~ GT))
+                                            var_formula = ~ DS))
     expect_is(object = gwas5$results, class = 'tbl_df')
 
     # no testing with no covariates
@@ -82,9 +82,13 @@ test_that(
   desc = 'Conduct an mvGWAS on a slurm cluster',
   code = {
 
+    # I have no idea why this works to test whether a slurm cluster is available, but it does
     if (as.logical(system(command = 'squeue', ignore.stdout = TRUE, ignore.stderr = TRUE))) {
+
       message('No slurm cluster available, so not testing submission to cluster')
+
     } else {
+
       # mean, var, and joint testing with covariates in both models
       gwas1 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
       expect_is(object = gwas1$conduct_scan(mean_formula = sbp ~ EV1 + male + MAP_gt,
@@ -92,6 +96,7 @@ test_that(
                                             system = 'slurm'),
                 class = 'mvGWAS')
       expect_is(object = gwas1$results, class = 'tbl_df')
+
     }
   }
 )
