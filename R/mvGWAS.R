@@ -55,9 +55,11 @@ mvGWAS$methods(
     }
 
     # a little checking of phenotype file
-    if (!(names(phenotypes)[1] %in% c('ID', 'IID'))) {
-      warning("First column of phenotype file will be used as ID column for matching genotypes.
-                 It's not named 'ID' nor 'IID', so make sure it's there!")
+    if (names(phenotypes)[1] != 'ID') {
+      stop('First column of phenotype_file must be "ID".  It will be used for matching with genotypes.')
+    }
+    if (nrow(phenotypes) > 1e5) {
+      warning('mvGWAS hasnt been tested on datasets with more than 100,000 individuals.')
     }
 
     # weakly validate genotype directory
