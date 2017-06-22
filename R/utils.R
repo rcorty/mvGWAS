@@ -61,7 +61,11 @@ scan_vcf_file_ <-  function(file_name,
   num_indivs <- length(IDs)
   LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
   df_mean <- df_var <- df_joint <- rep(NA, num_snps)
+  beta_mean <- se_mean <- rep(NA, num_snp)
+  beta_var <- se_var <- rep(NA, num_snps)
+  this_locus_n <- rep(NA, num_snps)
   gts_raw <- rep(0, num_indivs)
+
 
   message('Started for loop over SNPs')
 
@@ -114,6 +118,7 @@ scan_vcf_file_ <-  function(file_name,
     this_locus_df <- phenotype_df
     this_locus_df[['MAP_gt']] <- gts[match(x = IDs, table = phenotype_df[[1]])]
     this_locus_df <- na.omit(object = this_locus_df)
+    this_locus_n <- nrow(this_locus_df)
 
     alt_fit <- tryNULL(dglm::dglm(formula = mean_formula,
                                   dformula = var_formula,
