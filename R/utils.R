@@ -52,7 +52,8 @@ scan_vcf_file_ <-  function(file_name,
 
   message('Started scan_vcf_file_')
 
-  attach(add_objects)
+  # crazy but necessary to use rslurm
+  try(expr = attach(add_objects), silent = TRUE)
 
   vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
@@ -61,7 +62,7 @@ scan_vcf_file_ <-  function(file_name,
   num_indivs <- length(IDs)
   LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
   df_mean <- df_var <- df_joint <- rep(NA, num_snps)
-  beta_mean <- se_mean <- rep(NA, num_snp)
+  beta_mean <- se_mean <- rep(NA, num_snps)
   beta_var <- se_var <- rep(NA, num_snps)
   this_locus_n <- rep(NA, num_snps)
   gts_raw <- rep(0, num_indivs)
