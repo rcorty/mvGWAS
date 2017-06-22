@@ -88,6 +88,10 @@ mvGWAS$methods(
   scan_vcf_file_ = function(file_name,
                             drop_gts_w_fewer_than_x_obs = 5) {
 
+    try(expr = attach(what = add_objects), silent = TRUE)
+    try(expr = attach(what = data, warn.conflicts = FALSE), silent = TRUE)
+    try(expr = attach(what = metadata, warn.conflicts = FALSE), silent = TRUE)
+
     vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
     IDs <- vcf@gt %>% colnames() %>% .[-1]
@@ -143,21 +147,21 @@ mvGWAS$methods(
       # after all that checking and pruning, finally turn gts into factor
       gts <- factor(gts)
 
-      this_locus_df <- data$phenotypes
-      this_locus_df[['MAP_gt']] <- gts[match(x = IDs, table = data$phenotypes[[1]])]
+      this_locus_df <- phenotypes
+      this_locus_df[['MAP_gt']] <- gts[match(x = IDs, table = phenotypes[[1]])]
       this_locus_df <- na.omit(object = this_locus_df)
 
-      alt_fit <- tryNULL(dglm::dglm(formula = metadata$mean_formula,
-                                    dformula = metadata$var_formula,
+      alt_fit <- tryNULL(dglm::dglm(formula = mean_formula,
+                                    dformula = var_formula,
                                     data = this_locus_df))
 
       # if we couldn't fit the alt model, move on
       if (is.null(alt_fit)) { next }
 
       # mean test
-      if ('mean_null_formula' %in% names(metadata)) {
-        mean_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_null_formula,
-                                            dformula = metadata$var_formula,
+      if (exists(x = 'mean_null_formula')) {
+        mean_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
+                                            dformula = var_formula,
                                             data = this_locus_df))
 
         if (is.null(mean_null_fit)) { next }
@@ -166,9 +170,9 @@ mvGWAS$methods(
       }
 
       # var test
-      if ('var_null_formula' %in% names(metadata)) {
-        var_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_formula,
-                                           dformula = metadata$var_null_formula,
+      if (exists(x = 'var_null_formula')) {
+        var_null_fit <- tryNULL(dglm::dglm(formula = mean_formula,
+                                           dformula = var_null_formula,
                                            data = this_locus_df))
 
         if (is.null(var_null_fit)) { next }
@@ -177,9 +181,9 @@ mvGWAS$methods(
       }
 
       # joint test
-      if (all(c('mean_null_formula', 'var_null_formula') %in% names(metadata))) {
-        joint_null_fit <- tryNULL(dglm::dglm(formula = metadata$mean_null_formula,
-                                             dformula = metadata$var_null_formula,
+      if (all(exists(x = 'mean_null_formula'), exists(x = 'var_null_formula'))) {
+        joint_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
+                                             dformula = var_null_formula,
                                              data = this_locus_df))
 
         if (is.null(joint_null_fit)) { next }
@@ -313,13 +317,15 @@ mvGWAS$methods(
 
     genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
 
-    browser()
-
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
                                 params = dplyr::data_frame(file_name = genotype_files),
                                 nodes = min(max_num_nodes, length(genotype_files)),
                                 cpus_per_node = 1,
-                                ...)
+                                add_objects = list(mean_formula = .self$metadata$mean_formula,
+                                                   var_formula = .self$metadata$var_formula,
+                                                   mean_null_formula = .self$metadata$mean_null_formula,
+                                                   var_null_formula = .self$metadata$var_null_formula,
+                                                   phenotypes = .self$data$phenotypes))
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 
