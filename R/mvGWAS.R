@@ -243,7 +243,7 @@ mvGWAS$methods(
            'local' = conduct_scan_local_(...),
            'slurm' = conduct_scan_slurm_(...))
 
-    return(.self)
+    return(TRUE)
 
   }
 )
