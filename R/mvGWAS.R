@@ -15,9 +15,8 @@ mvGWAS <- setRefClass(
   Class = 'mvGWAS',
   fields = list(metadata = 'list',
                 data = 'list',
-                intermediataes = 'list',
+                null_model = 'ANY',    # todo: make this DGLM, but need to import it beforehand or something
                 results = 'data.frame'))
-
 
 
 #' @title initialize
