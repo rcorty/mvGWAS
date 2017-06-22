@@ -1,12 +1,12 @@
 #' @title tryNA
 #' @description silently get what you can out of an expression
+#' @rdname internals
 #'
 #' @param expr the expression to try to evaluate
 #'
 #' @return If the expression evaluates without error, the evaluated expression.
 #' If there is an error in evaluating the expression, NA.
 #' Warnings are suppresssed.
-#'
 #' @export
 #'
 tryNA <- function(expr) {
@@ -18,13 +18,13 @@ tryNA <- function(expr) {
 
 #' @title tryNULL
 #' @description silently get what you can out of an expression
+#' @rdname internals
 #'
 #' @param expr the expression to try to evaluate
 #'
 #' @return If the expression evaluates without error, the evaluated expression.
 #' If there is an error in evaluating the expression, NULL.
 #' Warnings are suppresssed.
-#'
 #' @export
 #'
 tryNULL <- function(expr) {
@@ -37,150 +37,127 @@ tryNULL <- function(expr) {
 
 
 
-
-#' @title scan_vcf_file_
-#' @name mvGWAS_internals_
+#' @title pull_GT
+#' @description Pull the GT (maximum likelihood genotype) from a vcf file snp row.
+#' @rdname internals
 #'
-#' @rdname mvGWAS_internals
+#' @param snp_row the snp row from the VCF file (first cell is FORMAT)
+#' @param min_gt_count minimum number of observations required to keep a genotype group in the study.
+#'     Five is the default, but I advocate a slightly higher value for research (10 or 20 maybe).
 #'
-#' @return nothing
+#' @return a data.frame where the first column is the ID and the second column is the genotype
+#' @export
 #'
-#' @importFrom dplyr %>%
-#'
-scan_vcf_file_ <-  function(file_name,
-                            drop_gts_w_fewer_than_x_obs = 5) {
+pull_GT <- function(snp_row, min_gt_count) {
 
-  message('Started scan_vcf_file_')
-
-  # crazy but necessary to use rslurm
-  try(expr = attach(add_objects), silent = TRUE)
-
-  vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
-
-  IDs <- vcf@gt %>% colnames() %>% .[-1]
-  num_snps <- dim(vcf)[1]
-  num_indivs <- length(IDs)
-  LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
-  df_mean <- df_var <- df_joint <- rep(NA, num_snps)
-  beta_mean <- se_mean <- rep(NA, num_snps)
-  beta_var <- se_var <- rep(NA, num_snps)
-  this_locus_n <- rep(NA, num_snps)
-  gts_raw <- rep(0, num_indivs)
-
-
-  message('Started for loop over SNPs')
-
-  for (snp_idx in 1:num_snps) {
-
-    # drop FORMAT columns
-    snp <- vcf@gt[snp_idx, -1]
-
-    # pull out first column...may want to check in FORMAT column that MAP_gt is first
-    last_gts <- gts_raw
-    gts_raw <- stringr::str_split(string = snp, pattern = ':', simplify = TRUE)[,1]
-
-    # if no genetic variation at this locus, move on
-    if (length(unique(gts_raw)) == 1) { next }
-
-    # if this snp is exactly the same as the last one, move on
-    # may want to move on if it even creates the same grouping?
-    if (all(last_gts == gts_raw)) {
-      LR_mean[snp_idx]  <- LR_mean[snp_idx - 1]
-      LR_var[snp_idx]   <- LR_var[snp_idx - 1]
-      LR_joint[snp_idx] <- LR_joint[snp_idx - 1]
-      df_mean[snp_idx] <- df_mean[snp_idx - 1]
-      df_var[snp_idx] <- df_var[snp_idx - 1]
-      df_joint[snp_idx] <- df_joint[snp_idx - 1]
-      next
-    }
-
-
-    # if hets in both 'directions' are present, collapse them to one
-    # may need to deal with '0\1' or '0/1' at some point
-    if (all('0|1' %in% gts_raw, '1|0' %in% gts_raw)) {
-      gts <- replace(x = gts_raw, list = gts_raw == '1|0', values = '0|1')
-    } else {
-      gts <- gts_raw
-    }
-
-    # if there's any very rare GT, drop it
-    if (any(table(gts) < drop_gts_w_fewer_than_x_obs)) {
-      bad_gts <- names(table(gts))[table(gts) < drop_gts_w_fewer_than_x_obs]
-      gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
-    }
-
-    # if there's only one level, move on
-    # have to check again after possibly dropping a rare GT
-    if (length(unique(gts)) == 1) { next }
-
-    # after all that checking and pruning, finally turn gts into factor
-    gts <- factor(gts)
-
-    this_locus_df <- phenotype_df
-    this_locus_df[['MAP_gt']] <- gts[match(x = IDs, table = phenotype_df[[1]])]
-    this_locus_df <- na.omit(object = this_locus_df)
-    this_locus_n <- nrow(this_locus_df)
-
-    alt_fit <- tryNULL(dglm::dglm(formula = mean_formula,
-                                  dformula = var_formula,
-                                  data = this_locus_df))
-
-    # if we couldn't fit the alt model, move on
-    if (is.null(alt_fit)) { next }
-
-    # mean test
-    if (!is.null(mean_null_formula)) {
-      mean_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
-                                          dformula = var_formula,
-                                          data = this_locus_df))
-
-      if (is.null(mean_null_fit)) { next }
-      LR_mean[snp_idx] <- mean_null_fit$m2loglik - alt_fit$m2loglik
-      df_mean[snp_idx] <- df.residual(mean_null_fit) - df.residual(alt_fit)
-    }
-
-    # var test
-    if (!is.null(var_null_formula)) {
-      var_null_fit <- tryNULL(dglm::dglm(formula = mean_formula,
-                                         dformula = var_null_formula,
-                                         data = this_locus_df))
-
-      if (is.null(var_null_fit)) { next }
-      LR_var[snp_idx] <- var_null_fit$m2loglik - alt_fit$m2loglik
-      df_var[snp_idx] <- df.residual(var_null_fit$dispersion.fit) - df.residual(alt_fit$dispersion.fit)
-    }
-
-    # joint test
-    if (!is.null(mean_null_formula) & !is.null(var_null_formula)) {
-      joint_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
-                                           dformula = var_null_formula,
-                                           data = this_locus_df))
-
-      if (is.null(joint_null_fit)) { next }
-      LR_joint[snp_idx] <- joint_null_fit$m2loglik - alt_fit$m2loglik
-      df_joint[snp_idx] <- df.residual(mean_null_fit) - df.residual(alt_fit) +
-        df.residual(var_null_fit$dispersion.fit) - df.residual(alt_fit$dispersion.fit)
-    }
-
+  if (names(snp_row)[1] != 'FORMAT') {
+    stop('First column in genotype section of VCF file must be "FORMAT".')
   }
-  message('Finished for loop over SNPs')
 
-  fix_df <- vcf@fix %>%
-    dplyr::as_data_frame() %>%
-    dplyr::select(-QUAL, -INFO) %>%
-    dplyr::mutate(POS = as.numeric(POS))
+  snp_formats <- stringr::str_split(string = snp_row[1], pattern = ':')[[1]]
+  gt_idx <- which(x = 'GT' == snp_formats)
 
-  result <- dplyr::data_frame(LR_mean = LR_mean,
-                              LR_var = LR_var,
-                              LR_joint = LR_joint,
-                              df_mean = df_mean,
-                              df_var = df_var,
-                              df_joint = df_joint,
-                              mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
-                              var_asymp_p   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
-                              joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
+  snp_row <- snp_row[-1]
+  num_indiv <- length(snp_row)
+  gts_raw <- stringr::str_split(string = snp_row, pattern = ':', simplify = TRUE)[,gt_idx]
 
+  # if hets in both 'directions' are present, collapse them to one
+  # todo: may need to deal with '0\1' or '0/1' at some point
+  if (all('0|1' %in% gts_raw, '1|0' %in% gts_raw)) {
+    gts <- replace(x = gts_raw, list = gts_raw == '1|0', values = '0|1')
+  } else {
+    gts <- gts_raw
+  }
 
-  return(dplyr::bind_cols(fix_df, result))
+  # if there's any too-rare GT, drop it
+  if (any(table(gts) < min_gt_count)) {
+    bad_gts <- names(table(gts))[table(gts) < min_gt_count]
+    gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
+  }
+
+  # if all the same GT, just return all 0's...
+  # todo: check that this is kosher
+  if (length(unique(gts)) == 1) {
+    return(data.frame(ID = names(snp_row),
+                      GT = rep(0, num_indiv),
+                      stringsAsFactors = FALSE))
+  } else {
+    return(data.frame(ID = names(snp_row),
+                      GT = factor(gts),
+                      stringsAsFactors = FALSE))
+  }
+
 }
 
+
+
+#' @title pull_DS
+#' @description Pull the DS (alternate allele dosage) from a vcf file snp row.
+#' @rdname internals
+#'
+#' @param snp_row the snp row from the VCF file (first cell is FORMAT)
+#'
+#' @return a data.frame where the first column is the ID and the second column is the genotype
+#' @export
+#'
+pull_DS <- function(snp_row) {
+
+  if (names(snp_row)[1] != 'FORMAT') {
+    stop('First column in genotype section of VCF file must be "FORMAT".')
+  }
+
+  snp_formats <- stringr::str_split(string = snp_row[1], pattern = ':')[[1]]
+  ds_idx <- which(x = 'DS' == snp_formats)
+
+  snp_row <- snp_row[-1]
+  num_indiv <- length(snp_row)
+  dosage_raw <- stringr::str_split(string = snp_row, pattern = ':', simplify = TRUE)[,ds_idx]
+  dosage_num <- as.numeric(dosage_raw)
+
+  return(data.frame(ID = names(snp_row),
+                    DS = dosage_num,
+                    stringsAsFactors = FALSE))
+}
+
+
+
+#' @title pull_GP
+#' @description Pull the GP (genotype probabilities) from a vcf file snp row.
+#' @rdname internals
+#'
+#' @param snp_row the snp row from the VCF file (first cell is FORMAT)
+#' @param min_gp Any genotype probabilities below this value are replaced with 0.
+#'     Any genotype probabilities above (1 - this value) are replaced with 1.
+#'
+#' @return  a data.frame where the first column is the ID and the second and third columns are genotype probabilities
+#' @export
+#'
+pull_GP <- function(snp_row, min_gp) {
+
+  if (names(snp_row)[1] != 'FORMAT') {
+    stop('First column in genotype section of VCF file must be "FORMAT".')
+  }
+
+  snp_formats <- stringr::str_split(string = snp_row[1], pattern = ':')[[1]]
+  gp_idx <- which(x = 'GP' == snp_formats)
+
+  snp_row <- snp_row[-1]
+  num_indiv <- length(snp_row)
+
+  genoprob_string_vec <- stringr::str_split(string = snp_row, pattern = ':', simplify = TRUE)[,gp_idx]
+  genoprobs_raw <- stringr::str_split(string = genoprob_string_vec, pattern = ',', simplify = TRUE)
+  genoprobs_num <- apply(X = genoprobs_raw, MARGIN = 2, FUN = as.numeric)
+
+  if (any(abs(apply(X = genoprobs_num, MARGIN = 1, FUN = sum) - 1) > 0.01)) {
+    stop('Genoprobs dont add to 1.')
+  }
+
+  genoprobs_zeroed <- replace(x = genoprobs_num, list = genoprobs_num < min_gp, values = 0)
+  genoprobs_oned <- replace(x = genoprobs_zeroed, list = genoprobs_zeroed > (1 - min_gp), values = 1)
+
+  genoprob_df <- as.data.frame(genoprobs_oned)
+  names(genoprob_df) <- c('GP_ref', 'GP_het', 'GP_alt')
+  genoprob_df$ID <- names(snp_row)
+
+  return(genoprob_df[c('ID', 'GP_het', 'GP_alt')])
+}

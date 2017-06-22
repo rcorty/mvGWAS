@@ -187,7 +187,8 @@ mvGWAS$methods(
 #'
 mvGWAS$methods(
   scan_vcf_file_ = function(file_name,
-                            drop_gts_w_fewer_than_x_obs = 5) {
+                            min_gt_count = 5,
+                            min_gp = 0.05) {
 
     try(expr = attach(what = add_objects), silent = TRUE)
     try(expr = attach(what = data, warn.conflicts = FALSE), silent = TRUE)
@@ -198,63 +199,56 @@ mvGWAS$methods(
     IDs <- vcf@gt %>% colnames() %>% .[-1]
     num_snps <- dim(vcf)[1]
     num_indivs <- length(IDs)
+
     LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
     df_mean <- df_var <- df_joint <- rep(NA, num_snps)
-    gts_raw <- rep(0, num_indivs)
+    beta_mean <- se_mean <- rep(NA, num_snps)
+    beta_var <- se_var <- rep(NA, num_snps)
+    this_locus_n <- rep(NA, num_snps)
+
+    last_locus_df <- dplyr::data_frame()
 
     for (snp_idx in 1:num_snps) {
 
+      this_locus_df <- phenotypes
+
       # drop FORMAT columns
-      snp <- vcf@gt[snp_idx, -1]
+      snp_row <- vcf@gt[snp_idx, ]
 
-      # pull out first column...may want to check in FORMAT column that MAP_gt is first
-      last_gts <- gts_raw
-      gts_raw <- stringr::str_split(string = snp, pattern = ':', simplify = TRUE)[,1]
+      if ('GT' %in% used_keywords) {
+        this_locus_df <- dplyr::inner_join(x = this_locus_df,
+                                           y = pull_GT(snp_row = snp_row, min_gt_count = min_gt_count),
+                                           by = 'ID')
+      }
+      if ('DS' %in% used_keywords) {
+        this_locus_df <- dplyr::inner_join(x = this_locus_df,
+                                           y = pull_DS(snp_row = snp_row),
+                                           by = 'ID')
+      }
+      if ('GP' %in% used_keywords) {
+        this_locus_df <- dplyr::inner_join(x = this_locus_df,
+                                           y = pull_GP(snp_row = snp_row, min_gp = min_gp),
+                                           by = 'ID')
+      }
 
-      # if no genetic variation at this locus, move on
-      if (length(unique(gts_raw)) == 1) { next }
+      this_locus_df <- na.omit(object = this_locus_df)
 
-      # if this snp is exactly the same as the last one, move on
-      # may want to move on if it even creates the same grouping?
-      if (all(last_gts == gts_raw)) {
+      if (identical(this_locus_df, last_locus_df)) {
         LR_mean[snp_idx]  <- LR_mean[snp_idx - 1]
+        df_mean[snp_idx]  <- df_mean[snp_idx - 1]
         LR_var[snp_idx]   <- LR_var[snp_idx - 1]
+        df_var[snp_idx]   <- df_var[snp_idx - 1]
         LR_joint[snp_idx] <- LR_joint[snp_idx - 1]
-        df_mean[snp_idx] <- df_mean[snp_idx - 1]
-        df_var[snp_idx] <- df_var[snp_idx - 1]
         df_joint[snp_idx] <- df_joint[snp_idx - 1]
         next
       }
-      # if hets in both 'directions' are present, collapse them to one
 
+      this_locus_n[snp_idx] <- nrow(this_locus_df)
 
-      # may need to deal with '0\1' or '0/1' at some point
-      if (all('0|1' %in% gts_raw, '1|0' %in% gts_raw)) {
-        gts <- replace(x = gts_raw, list = gts_raw == '1|0', values = '0|1')
-      } else {
-        gts <- gts_raw
-      }
-
-      # if there's any very rare GT, drop it
-      if (any(table(gts) < drop_gts_w_fewer_than_x_obs)) {
-        bad_gts <- names(table(gts))[table(gts) < drop_gts_w_fewer_than_x_obs]
-        gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
-      }
-
-      # if there's only one level, move on
-      # have to check again after possibly dropping a rare GT
-      if (length(unique(gts)) == 1) { next }
-
-      # after all that checking and pruning, finally turn gts into factor
-      gts <- factor(gts)
-
-      this_locus_df <- phenotypes
-      this_locus_df[['MAP_gt']] <- gts[match(x = IDs, table = phenotypes[[1]])]
-      this_locus_df <- na.omit(object = this_locus_df)
-
-      alt_fit <- tryNULL(dglm::dglm(formula = mean_formula,
-                                    dformula = var_formula,
-                                    data = this_locus_df))
+      alt_fit <- tryNULL(dglm::dglm(formula = mean_alt_formula,
+                                    dformula = var_alt_formula,
+                                    data = this_locus_df,
+                                    method = 'ml'))
 
       # if we couldn't fit the alt model, move on
       if (is.null(alt_fit)) { next }
@@ -262,8 +256,9 @@ mvGWAS$methods(
       # mean test
       if (exists(x = 'mean_null_formula')) {
         mean_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
-                                            dformula = var_formula,
-                                            data = this_locus_df))
+                                            dformula = var_alt_formula,
+                                            data = this_locus_df,
+                                            method = 'ml'))
 
         if (is.null(mean_null_fit)) { next }
         LR_mean[snp_idx] <- mean_null_fit$m2loglik - alt_fit$m2loglik
@@ -272,9 +267,10 @@ mvGWAS$methods(
 
       # var test
       if (exists(x = 'var_null_formula')) {
-        var_null_fit <- tryNULL(dglm::dglm(formula = mean_formula,
+        var_null_fit <- tryNULL(dglm::dglm(formula = mean_alt_formula,
                                            dformula = var_null_formula,
-                                           data = this_locus_df))
+                                           data = this_locus_df,
+                                           method = 'ml'))
 
         if (is.null(var_null_fit)) { next }
         LR_var[snp_idx] <- var_null_fit$m2loglik - alt_fit$m2loglik
@@ -285,7 +281,8 @@ mvGWAS$methods(
       if (all(exists(x = 'mean_null_formula'), exists(x = 'var_null_formula'))) {
         joint_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
                                              dformula = var_null_formula,
-                                             data = this_locus_df))
+                                             data = this_locus_df,
+                                             method = 'ml'))
 
         if (is.null(joint_null_fit)) { next }
         LR_joint[snp_idx] <- joint_null_fit$m2loglik - alt_fit$m2loglik
@@ -302,12 +299,13 @@ mvGWAS$methods(
       dplyr::select(-QUAL, -INFO) %>%
       dplyr::mutate(POS = as.numeric(POS))
 
-    result <- dplyr::data_frame(LR_mean = LR_mean,
-                                LR_var = LR_var,
-                                LR_joint = LR_joint,
-                                df_mean = df_mean,
-                                df_var = df_var,
-                                df_joint = df_joint,
+    result <- dplyr::data_frame(n             = this_locus_n,
+                                LR_mean       = LR_mean,
+                                LR_var        = LR_var,
+                                LR_joint      = LR_joint,
+                                df_mean       = df_mean,
+                                df_var        = df_var,
+                                df_joint      = df_joint,
                                 mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
                                 var_asymp_p   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
                                 joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
@@ -316,83 +314,6 @@ mvGWAS$methods(
     return(dplyr::bind_cols(fix_df, result))
   }
 )
-
-
-#' @title stash_formula_
-#' @name mvGWAS_internals
-#'
-#' @param formula the formula to validate
-#' @param type one of 'mean' or 'var'
-#'
-#' @description validates a formula and stashes it for use in an mvGWAS
-#'
-#' @return nothing
-#'
-mvGWAS$methods(
-  stash_formula_ = function(formula, type = c('mean', 'var')) {
-
-    type <- match.arg(arg = type)
-
-    stopifnot(inherits(x = formula, 'formula'))
-    stopifnot(length(formula) == switch(EXPR = type, mean = 3, var = 2))
-    stopifnot(all.vars(expr = formula) %in% c(names(data$phenotypes), metadata$available_keywords))
-
-    metadata[[paste0(type, '_formula')]] <<- formula
-
-    rhs <- formula[[switch(EXPR = type, mean = 3, var = 2)]]
-    rhs_vars <- all.vars(rhs)
-    keyword_idxs <- grep(pattern = paste(metadata$available_keywords, collapse = '|'), x = rhs_vars)
-
-    # remove keywords (the words used to refer to the locus) to create null formula
-    if (any(keyword_idxs)) {
-
-      # corner case where there are no non-special RHS terms
-      if (length(keyword_idxs) == length(rhs_vars)) {
-
-        r <- switch(EXPR = type, mean = formula[[2]], var = NULL)
-        null_formula <- stats::reformulate(termlabels = '1', response = r)
-
-      # typical case
-      } else {
-
-        kr <- switch(EXPR = type, mean = TRUE, var = FALSE)
-        null_formula <- stats::formula(x = stats::drop.terms(termobj = stats::terms(formula),
-                                                             dropx = keyword_idxs,
-                                                             keep.response = kr))
-
-      }
-    } else {
-
-      null_formula <- NULL
-
-    }
-
-    metadata[[paste0(type, '_null_formula')]] <<- null_formula
-
-  }
-)
-
-
-
-
-
-#' @title determine_keyword_use_
-#' @name mvGWAS_internals
-#'
-#' @description determines which keywords are used in mean_formula and var_formula
-#'
-#' @return nothing
-#'
-mvGWAS$methods(
-  determine_keyword_use_ = function() {
-
-    used_keyword_idxs <- metadata$available_keywords %in% c(all.vars(metadata$mean_formula), all.vars(metadata$var_formula))
-    metadata$used_keywords <<- metadata$available_keywords[used_keyword_idxs]
-
-  }
-)
-
-
 
 
 #' @title conduct_scan_local_
@@ -426,8 +347,6 @@ mvGWAS$methods(
 )
 
 
-
-
 #' @title conduct_scan_slurm_
 #' @name mvGWAS_internals
 #'
@@ -446,10 +365,11 @@ mvGWAS$methods(
                                 params = dplyr::data_frame(file_name = genotype_files),
                                 nodes = min(max_num_nodes, length(genotype_files)),
                                 cpus_per_node = 1,
-                                add_objects = list(mean_formula = .self$metadata$mean_formula,
-                                                   var_formula = .self$metadata$var_formula,
+                                add_objects = list(mean_alt_formula = .self$metadata$mean_alt_formula,
+                                                   var_alt_formula = .self$metadata$var_alt_formula,
                                                    mean_null_formula = .self$metadata$mean_null_formula,
                                                    var_null_formula = .self$metadata$var_null_formula,
+                                                   used_keywords = .self$metadata$used_keywords,
                                                    phenotypes = .self$data$phenotypes))
 
 
@@ -482,14 +402,14 @@ mvGWAS$methods(
 
     system <- match.arg(arg = system)
 
+    determine_keyword_use_(mean_formula, var_formula)
+
     stash_formula_(formula = mean_formula, type = 'mean')
     stash_formula_(formula = var_formula, type = 'var')
 
-    determine_keyword_use_()
-
-    if (!any(grepl(pattern = 'null_formula', x = names(metadata)))) {
-      stop('Use MAP_gt in at least one of mean_formula or var_formula.')
-    }
+    null_model <<- dglm::dglm(formula = metadata$mean_null_formula,
+                              dformula = metadata$var_null_formula,
+                              data = data$phenotypes)
 
     switch(EXPR = system,
            'local' = conduct_scan_local_(...),
