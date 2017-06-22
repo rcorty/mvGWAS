@@ -98,6 +98,84 @@ mvGWAS$methods(
 )
 
 
+#' @title stash_formula_
+#' @name mvGWAS_internals
+#'
+#' @param formula the formula to validate
+#' @param type one of 'mean' or 'var'
+#'
+#' @description validates a formula and stashes it for use in an mvGWAS
+#'
+#' @return nothing
+#'
+mvGWAS$methods(
+  stash_formula_ = function(formula, type = c('mean', 'var')) {
+
+    type <- match.arg(arg = type)
+
+    stopifnot(inherits(x = formula, 'formula'))
+    stopifnot(length(formula) == switch(EXPR = type, mean = 3, var = 2))
+    stopifnot(all.vars(expr = formula) %in% c(names(data$phenotypes), metadata$available_keywords))
+
+    # derive and stash null formula
+    rhs <- formula[[switch(EXPR = type, mean = 3, var = 2)]]
+    rhs_vars <- all.vars(rhs)
+    keyword_idxs <- grep(pattern = paste(metadata$available_keywords, collapse = '|'), x = rhs_vars)
+
+    # If the formula uses one or more keywords (the words used to refer to the locus),
+    # remove them to create a null formula then save the original as the alternative formula
+    if (any(keyword_idxs)) {
+
+      # corner case where there are no non-keyword RHS terms
+      if (length(keyword_idxs) == length(rhs_vars)) {
+
+        r <- switch(EXPR = type, mean = formula[[2]], var = NULL)
+        null_formula <- stats::reformulate(termlabels = '1', response = r)
+
+      # typical case
+      } else {
+
+        kr <- switch(EXPR = type, mean = TRUE, var = FALSE)
+        keyword_free <- stats::drop.terms(termobj = stats::terms(formula),
+                                          dropx = keyword_idxs,
+                                          keep.response = kr)
+        null_formula <- stats::formula(x = keyword_free)
+
+      }
+
+      # modify formula if it uses GP -- need two terms -- one for het and one for homozygous alternative
+      if ('GP' %in% all.vars(expr = formula)) {
+
+        r <- switch(EXPR = type, mean = formula[[2]], var = NULL)
+        new_terms <- gsub(pattern = 'GP', replacement = 'GP_het + GP_alt', x = labels(stats::terms(formula)))
+        alt_formula <- reformulate(termlabels = new_terms, response = r)
+
+      } else {
+        alt_formula <- formula
+      }
+
+    # If the formula doesn't use any keywords, just save it as the null and we don't have an alt
+    } else {
+
+      alt_formula <- NULL
+      null_formula <- formula
+
+    }
+
+    metadata[[paste0(type, '_null_formula')]] <<- null_formula
+    metadata[[paste0(type, '_alt_formula')]] <<- alt_formula
+
+
+
+
+
+
+  }
+)
+
+
+
+
 #' @title scan_vcf_file_
 #' @name mvGWAS_internals_
 #'
