@@ -1,11 +1,11 @@
-#' @title mvGWAS reference class
+#' @title A Reference Class to represent a mean-variance GWAS
 #' @name mvGWAS
 #'
 #' @description A reference class implementing a Mean-Variance Genome Wide Association Study
 #'
 #' @field metadata information about the mvGWAS
 #' @field data the data used to conduct the mvGWAS
-#' @field intermediates computations stored in the course of conducting the mvGWAS that aren't readily interpretable
+#' @field null_model the model fit without any SNPs
 #' @field results the results of the mvGWAS
 #'
 #' @export mvGWAS
@@ -20,7 +20,7 @@ mvGWAS <- setRefClass(
 
 
 #' @title initialize
-#' @name mvGWAS_initialize
+#' @name mvGWAS
 #'
 #' @description Initialize an mvGWAS object
 #'
@@ -89,8 +89,6 @@ mvGWAS$methods(
   determine_keyword_use_ = function(mean_formula, var_formula) {
 
     used_keyword_idxs <- metadata$available_keywords %in% c(all.vars(mean_formula), all.vars(var_formula))
-
-    if (!any(used_keyword_idxs)) { stop(paste0("Use at least one keyword in at least one 'mean_formula' and 'var_formula'. Keywords are: (", paste(metadata$available_keywords, collapse = ', '), ").")) }
 
     metadata$used_keywords <<- metadata$available_keywords[used_keyword_idxs]
 
@@ -177,7 +175,7 @@ mvGWAS$methods(
 
 
 #' @title scan_vcf_file_
-#' @name mvGWAS_internals_
+#' @name mvGWAS_scan_vcf_file
 #'
 #' @rdname mvGWAS_internals
 #'
@@ -325,6 +323,8 @@ mvGWAS$methods(
 #'
 #' @return nothing
 #'
+#' @importFrom dplyr %>%
+#'
 mvGWAS$methods(
   conduct_scan_local_ = function(num_cores = parallel::detectCores()) {
 
@@ -353,6 +353,8 @@ mvGWAS$methods(
 #' @description conducts a genome scan on a slurm cluster
 #'
 #' @return nothing
+#'
+#' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
   conduct_scan_slurm_ = function(max_num_nodes = Inf, ...) {
@@ -383,6 +385,7 @@ mvGWAS$methods(
 
 #' @title conduct_scan
 #' @name mvGWAS_conduct_scan
+#' @rdname mvGWAS
 #'
 #' @param mean_formula the mean formula
 #' @param var_formula the variance formula
@@ -398,7 +401,7 @@ mvGWAS$methods(
                           system = c('local', 'slurm'),
                           ...) {
 
-    usingMethods(stash_formula_, determine_keyword_use_, conduct_scan_local_, conduct_scan_slurm_)
+    usingMethods(determine_keyword_use_, stash_formula_, conduct_scan_local_, conduct_scan_slurm_)
 
     system <- match.arg(arg = system)
 
@@ -410,6 +413,11 @@ mvGWAS$methods(
     null_model <<- dglm::dglm(formula = metadata$mean_null_formula,
                               dformula = metadata$var_null_formula,
                               data = data$phenotypes)
+
+    if (length(metadata$used_keywords) == 0) {
+      message('No keywords in mean_formula nor var_formula.  Returning without scanny any SNPs.')
+      return(TRUE)
+    }
 
     switch(EXPR = system,
            'local' = conduct_scan_local_(...),

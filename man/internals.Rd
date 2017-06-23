@@ -28,12 +28,6 @@ Five is the default, but I advocate a slightly higher value for research (10 or 
 
 \item{min_gp}{Any genotype probabilities below this value are replaced with 0.
 Any genotype probabilities above (1 - this value) are replaced with 1.}
-
-\item{expr}{the expression to try to evaluate}
-
-\item{snp_row}{the snp row from the VCF file (first cell is FORMAT)}
-
-\item{snp_row}{the snp row from the VCF file (first cell is FORMAT)}
 }
 \value{
 If the expression evaluates without error, the evaluated expression.

@@ -2,7 +2,7 @@ Package: mvGWAS
 Type: Package
 Title: Uses the DGLM packge (double generalized linear model) to do a GWAS,
     assess significance of results, and plot results
-Version: 0.1
+Version: 0.5
 Date: 2015-09-30
 Author: Robert Corty
 Maintainer: <rcorty@gmail.com>
@@ -20,11 +20,9 @@ Imports: dplyr,
     tidyr,
     ggplot2,
     stringr,
-    GGally,
     dglm,
     evd,
-    broman,
-    magrittr,
     tidyverse,
     vcfR,
-    parallel
+    parallel,
+    methods

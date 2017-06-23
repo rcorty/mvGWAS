@@ -3,7 +3,7 @@
 \name{mvGWAS_internals}
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
-\alias{mvGWAS_internals_}
+\alias{mvGWAS_scan_vcf_file}
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
 \title{determine_keyword_use_}

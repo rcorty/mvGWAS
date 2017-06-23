@@ -20,7 +20,6 @@ tryNA <- function(expr) {
 #' @description silently get what you can out of an expression
 #' @rdname internals
 #'
-#' @param expr the expression to try to evaluate
 #'
 #' @return If the expression evaluates without error, the evaluated expression.
 #' If there is an error in evaluating the expression, NULL.
@@ -95,8 +94,6 @@ pull_GT <- function(snp_row, min_gt_count) {
 #' @description Pull the DS (alternate allele dosage) from a vcf file snp row.
 #' @rdname internals
 #'
-#' @param snp_row the snp row from the VCF file (first cell is FORMAT)
-#'
 #' @return a data.frame where the first column is the ID and the second column is the genotype
 #' @export
 #'
@@ -125,7 +122,6 @@ pull_DS <- function(snp_row) {
 #' @description Pull the GP (genotype probabilities) from a vcf file snp row.
 #' @rdname internals
 #'
-#' @param snp_row the snp row from the VCF file (first cell is FORMAT)
 #' @param min_gp Any genotype probabilities below this value are replaced with 0.
 #'     Any genotype probabilities above (1 - this value) are replaced with 1.
 #'

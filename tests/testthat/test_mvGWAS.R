@@ -58,8 +58,8 @@ test_that(
 
     # no testing with covariates in both models
     gwas4 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
-    expect_error(object = gwas4$conduct_scan(mean_formula = sbp ~ EV1 + male,
-                                             var_formula = ~ EV1 + male))
+    expect_true(object = gwas4$conduct_scan(mean_formula = sbp ~ EV1 + male,
+                                            var_formula = ~ EV1 + male))
     expect_equal(object = dim(gwas4$results), c(0, 0))
 
 
@@ -71,8 +71,8 @@ test_that(
 
     # no testing with no covariates
     gwas8 <- mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS', genotype_directory = '../test_data')
-    expect_error(object = gwas8$conduct_scan(mean_formula = sbp ~ 1,
-                                             var_formula = ~ 1))
+    expect_true(object = gwas8$conduct_scan(mean_formula = sbp ~ 1,
+                                            var_formula = ~ 1))
     expect_equal(object = dim(gwas8$results), c(0, 0))
   }
 )
