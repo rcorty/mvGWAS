@@ -63,7 +63,7 @@ mvGWAS$methods(
     }
 
     # weakly validate genotype directory
-    # definitely a dir containing at least ont .VCF.GZ file
+    # definitely a dir containing at least one .VCF or .VCF.GZ file
     # maybe it can contain only that type of files?
 
 
@@ -178,7 +178,6 @@ mvGWAS$methods(
 #' @name mvGWAS_internals
 #'
 #' @return nothing
-#'
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
