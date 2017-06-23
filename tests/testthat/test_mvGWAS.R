@@ -14,7 +14,7 @@ test_that(
                                      genotype_directory = '../test_data'))
 
     expect_error(object = mvGWAS$new(phenotype_file = '../test_data/test_phenos.RDS',
-                                     genotype_directory = 'Yada yada yada'))
+                                     genotype_directory = 'Yada yada yada...'))
 
     expect_error(object = mvGWAS$new(phenotype_file = 'You yadad the best part!',
                                      genotype_directory = 'No, I mentioned the bisque.'))
