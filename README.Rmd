@@ -108,3 +108,19 @@ If `conduct_scan()` returns `TRUE`, it worked without error and the results are 
 my_gwas$qq_plot()
 my_gwas$manhattan_plot()
 ```
+
+## View the joint null model
+
+Because there are up to three hypotheses being tested, there are up to three null models.
+Only the null model for the joint test
+
+
+## Genomic control
+
+
+## Write the results to file
+
+```{r eval=FALSE}
+
+
+```
