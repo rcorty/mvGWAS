@@ -187,9 +187,14 @@ mvGWAS$methods(
                             min_gt_count = 5,
                             min_gp = 0.05) {
 
-    try(expr = attach(what = add_objects), silent = TRUE)
+    # for local
     try(expr = attach(what = data, warn.conflicts = FALSE), silent = TRUE)
     try(expr = attach(what = metadata, warn.conflicts = FALSE), silent = TRUE)
+    try(expr = attach(what = null_model, warn.conflicts = FALSE), silent = TRUE)
+
+    # for SLURM
+    try(expr = attach(what = add_objects, warn.conflicts = FALSE), silent = TRUE)
+
 
     vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
@@ -245,6 +250,7 @@ mvGWAS$methods(
       }
 
       this_locus_n[snp_idx] <- nrow(this_locus_df)
+      if (nrow(this_locus_df) == 0) { next }
 
       alt_fit <- tryNULL(dglm::dglm(formula = mean_alt_formula,
                                     dformula = var_alt_formula,
@@ -289,10 +295,7 @@ mvGWAS$methods(
 
       # joint test
       if (all(exists(x = 'mean_null_formula'), exists(x = 'var_null_formula'))) {
-        joint_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
-                                             dformula = var_null_formula,
-                                             data = this_locus_df,
-                                             method = 'ml'))
+        joint_null_fit <- null_model
 
         if (is.null(joint_null_fit)) { next }
         LR_joint[snp_idx] <- joint_null_fit$m2loglik - alt_fit$m2loglik
