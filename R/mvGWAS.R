@@ -33,7 +33,8 @@ mvGWAS <- setRefClass(
 #'
 mvGWAS$methods(
   initialize = function(phenotype_file,
-                        genotype_directory) {
+                        genotype_directory,
+                        genotype_file_pattern = '.*\\.(vcf|VCF)') {
 
     # check inputs
     stopifnot(file.exists(phenotype_file))
@@ -70,6 +71,7 @@ mvGWAS$methods(
     metadata <<- list(created_at = Sys.time(),
                       phenotype_file = phenotype_file,
                       genotype_directory = genotype_directory,
+                      genotype_file_pattern = genotype_file_pattern,
                       available_keywords = c('GT', 'DS', 'GP'))
 
     data <<- list(phenotypes = phenotypes)
@@ -348,7 +350,9 @@ mvGWAS$methods(
 
     usingMethods(scan_vcf_file_)
 
-    genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
+    genotype_files <- list.files(path = metadata$genotype_directory,
+                                 full.names = TRUE,
+                                 pattern = metadata$genotype_file_pattern)
 
     # better to use lapply directly if num_cores == 1 rather than let parallel::mclapply call it
     # bc user likely doesn't have parallel package installed
@@ -379,18 +383,21 @@ mvGWAS$methods(
 
     usingMethods(scan_vcf_file_)
 
-    genotype_files <- list.files(path = metadata$genotype_directory, full.names = TRUE, pattern = '\\.vcf|\\.VCF')
+    genotype_files <- list.files(path = metadata$genotype_directory,
+                                 full.names = TRUE,
+                                 pattern = metadata$genotype_file_pattern)
 
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
                                 params = dplyr::data_frame(file_name = genotype_files),
                                 nodes = min(max_num_nodes, length(genotype_files)),
                                 cpus_per_node = 1,
-                                add_objects = list(mean_alt_formula = .self$metadata$mean_alt_formula,
-                                                   var_alt_formula = .self$metadata$var_alt_formula,
-                                                   mean_null_formula = .self$metadata$mean_null_formula,
-                                                   var_null_formula = .self$metadata$var_null_formula,
-                                                   used_keywords = .self$metadata$used_keywords,
-                                                   phenotypes = .self$data$phenotypes))
+                                add_objects = list(mean_alt_formula = metadata$mean_alt_formula,
+                                                   var_alt_formula = metadata$var_alt_formula,
+                                                   mean_null_formula = metadata$mean_null_formula,
+                                                   var_null_formula = metadata$var_null_formula,
+                                                   used_keywords = metadata$used_keywords,
+                                                   null_model = null_model,
+                                                   phenotypes = data$phenotypes))
 
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
