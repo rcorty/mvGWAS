@@ -482,3 +482,40 @@ mvGWAS$methods(
 )
 
 
+
+
+#' @title qq_plot
+#' @name mvGWAS_qq_plot
+#'
+#' @description makes a Manhattan plot
+#'
+#' @return the plot
+#' @importFrom dplyr %>%
+#'
+mvGWAS$methods(
+  qq_plot = function(what_to_plot,
+                     theoretical = 'unif') {
+
+    v <- results[[what_to_plot]]
+
+    for_plotting <- dplyr::data_frame(obs = sort(v),
+                                      theo = seq(from = 0, to = 1, length.out = sum(!is.na(v))))
+
+    ggplot2::ggplot() +
+      ggplot2::geom_segment(data = dplyr::data_frame(start = 0, stop = 1),
+                            mapping = ggplot2::aes(x = start, y = start, xend = stop, yend = stop),
+                            color = 'gray') +
+      ggplot2::geom_point(data = for_plotting,
+                          mapping = ggplot2::aes(x = theo, y = obs)) +
+      ggplot2::ggtitle(label = paste0('QQ plot of ', what_to_plot)) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(axis.ticks = ggplot2::element_blank(),
+                     axis.text = ggplot2::element_blank()) +
+      ggplot2::xlab('Theoretical uniform distribution') +
+      ggplot2::ylab('Observed p values')
+
+
+  }
+)
+
+
