@@ -428,6 +428,34 @@ mvGWAS$methods(
 
 
 
+#' @title write_results_to_file
+#' @name mvGWAS_write_results_to_file
+#'
+#' @description Writes results to file
+#'
+#' @return TRUE if successful, FALSE otherwise.
+#' @importFrom dplyr %>%
+#'
+mvGWAS$methods(
+  write_results_to_file = function(file_name) {
+
+    if (missing(file_name)) {
+      phenotype_name <- as.character(x = metadata$mean_alt_formula[[2]])
+      file_name <- paste0(phenotype_name, '_', gsub(pattern = ' ', replacement = '_', x = Sys.time()), '.tsv')
+    }
+
+    readr::write_tsv(x = results %>% mutate_if(is.double, round, 3),
+                     path = file_name,
+                     col_names = TRUE)
+
+  }
+)
+
+
+
+
+
+
 #' @title manhattan_plot
 #' @name mvGWAS_manhattan_plot
 #'
