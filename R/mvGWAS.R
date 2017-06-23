@@ -20,7 +20,7 @@ mvGWAS <- setRefClass(
 
 
 #' @title initialize
-#' @name mvGWAS
+#' @name mvGWAS_initialize
 #'
 #' @description Initialize an mvGWAS object
 #'
@@ -130,7 +130,7 @@ mvGWAS$methods(
         r <- switch(EXPR = type, mean = formula[[2]], var = NULL)
         null_formula <- stats::reformulate(termlabels = '1', response = r)
 
-      # typical case
+        # typical case
       } else {
 
         kr <- switch(EXPR = type, mean = TRUE, var = FALSE)
@@ -152,7 +152,7 @@ mvGWAS$methods(
         alt_formula <- formula
       }
 
-    # If the formula doesn't use any keywords, just save it as the null and we don't have an alt
+      # If the formula doesn't use any keywords, just save it as the null and we don't have an alt
     } else {
 
       alt_formula <- NULL
@@ -175,9 +175,7 @@ mvGWAS$methods(
 
 
 #' @title scan_vcf_file_
-#' @name mvGWAS_scan_vcf_file
-#'
-#' @rdname mvGWAS_internals
+#' @name mvGWAS_internals
 #'
 #' @return nothing
 #'
@@ -385,7 +383,6 @@ mvGWAS$methods(
 
 #' @title conduct_scan
 #' @name mvGWAS_conduct_scan
-#' @rdname mvGWAS
 #'
 #' @param mean_formula the mean formula
 #' @param var_formula the variance formula

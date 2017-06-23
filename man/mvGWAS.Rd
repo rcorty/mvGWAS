@@ -3,31 +3,9 @@
 \docType{class}
 \name{mvGWAS}
 \alias{mvGWAS}
-\alias{mvGWAS}
-\alias{mvGWAS_conduct_scan}
 \title{A Reference Class to represent a mean-variance GWAS}
-\arguments{
-\item{phenotype_file}{The file that stores the phenotypes.  Must be a .CSV or .RDS.  Must have one column called 'ID'.}
-
-\item{genotype_directory}{The directory that stores the genotypes.  They must be in .vcf.gz format.}
-
-\item{mean_formula}{the mean formula}
-
-\item{var_formula}{the variance formula}
-
-\item{computer}{Either 'local' (default) or 'slurm'. Should the scan be conducted on the local machine or on a slurm cluster.}
-}
-\value{
-an mvGWAS object
-
-the mvGWAS object  (change this?)
-}
 \description{
 A reference class implementing a Mean-Variance Genome Wide Association Study
-
-Initialize an mvGWAS object
-
-conducts an mvGWAS
 }
 \section{Fields}{
 
