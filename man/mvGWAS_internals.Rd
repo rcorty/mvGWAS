@@ -4,21 +4,13 @@
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
-\alias{mvGWAS_internals}
-\alias{mvGWAS_internals}
 \title{determine_keyword_use_}
 \arguments{
 \item{formula}{the formula to validate}
 
 \item{type}{one of 'mean' or 'var'}
-
-\item{num_cores}{the number of cores to use, defaults to parallel::detectCores()}
 }
 \value{
-nothing
-
-nothing
-
 nothing
 
 nothing
@@ -29,8 +21,4 @@ nothing
 determines which keywords are used in mean_formula and var_formula
 
 validates a formula and stashes it for use in an mvGWAS
-
-conducts a genome scan locally
-
-conducts a genome scan on a slurm cluster
 }

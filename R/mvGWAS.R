@@ -192,15 +192,19 @@ mvGWAS$methods(
 
     vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
-    IDs <- vcf@gt %>% colnames() %>% .[-1]
     num_snps <- dim(vcf)[1]
-    num_indivs <- length(IDs)
+    num_indivs <- dim(vcf)[3] - 1
 
     LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
     df_mean <- df_var <- df_joint <- rep(NA, num_snps)
-    beta_mean <- se_mean <- rep(NA, num_snps)
-    beta_var <- se_var <- rep(NA, num_snps)
     this_locus_n <- rep(NA, num_snps)
+
+    if ('DS' %in% all.vars(mean_alt_formula)) {
+      DS_beta_mean <- DS_se_mean <- rep(NA, num_snps)
+    }
+    if ('DS' %in% all.vars(var_alt_formula)) {
+      DS_beta_var <- DS_se_var <- rep(NA, num_snps)
+    }
 
     last_locus_df <- dplyr::data_frame()
 
@@ -248,6 +252,15 @@ mvGWAS$methods(
 
       # if we couldn't fit the alt model, move on
       if (is.null(alt_fit)) { next }
+
+      if ('DS' %in% all.vars(mean_alt_formula)) {
+        DS_beta_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Estimate']
+        DS_se_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Std. Error']
+      }
+      if ('DS' %in% all.vars(var_alt_formula)) {
+        DS_beta_var[snp_idx] <- coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate']
+        DS_se_var[snp_idx] <-coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error']
+      }
 
       # mean test
       if (exists(x = 'mean_null_formula')) {
@@ -307,13 +320,20 @@ mvGWAS$methods(
                                 joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
 
 
+    if ('DS' %in% all.vars(mean_alt_formula)) {
+      result <- dplyr::bind_cols(result, DS_beta_mean = DS_beta_mean, DS_se_mean = DS_se_mean, DS_z_mean = DS_beta_mean/DS_se_mean)
+    }
+    if ('DS' %in% all.vars(var_alt_formula)) {
+      result <- dplyr::bind_cols(result, DS_beta_var = DS_beta_var, DS_se_var = DS_se_var, DS_z_var = DS_beta_var/DS_se_var)
+    }
+
     return(dplyr::bind_cols(fix_df, result))
   }
 )
 
 
 #' @title conduct_scan_local_
-#' @name mvGWAS_internals
+#' @name mvGWAS_conduct_scan
 #'
 #' @param num_cores the number of cores to use, defaults to parallel::detectCores()
 #'
@@ -346,7 +366,7 @@ mvGWAS$methods(
 
 
 #' @title conduct_scan_slurm_
-#' @name mvGWAS_internals
+#' @name mvGWAS_conduct_scan
 #'
 #' @description conducts a genome scan on a slurm cluster
 #'

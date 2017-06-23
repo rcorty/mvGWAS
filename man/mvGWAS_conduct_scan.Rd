@@ -2,8 +2,12 @@
 % Please edit documentation in R/mvGWAS.R
 \name{mvGWAS_conduct_scan}
 \alias{mvGWAS_conduct_scan}
-\title{conduct_scan}
+\alias{mvGWAS_conduct_scan}
+\alias{mvGWAS_conduct_scan}
+\title{conduct_scan_local_}
 \arguments{
+\item{num_cores}{the number of cores to use, defaults to parallel::detectCores()}
+
 \item{mean_formula}{the mean formula}
 
 \item{var_formula}{the variance formula}
@@ -11,8 +15,16 @@
 \item{computer}{Either 'local' (default) or 'slurm'. Should the scan be conducted on the local machine or on a slurm cluster.}
 }
 \value{
+nothing
+
+nothing
+
 the mvGWAS object  (change this?)
 }
 \description{
+conducts a genome scan locally
+
+conducts a genome scan on a slurm cluster
+
 conducts an mvGWAS
 }
