@@ -306,7 +306,8 @@ mvGWAS$methods(
     fix_df <- vcf@fix %>%
       dplyr::as_data_frame() %>%
       dplyr::select(-QUAL, -INFO) %>%
-      dplyr::mutate(POS = as.integer(POS))
+      dplyr::mutate(POS = as.integer(POS),
+                    vcf_file = file_name)
 
     result <- dplyr::data_frame(n             = this_locus_n,
                                 LR_mean       = LR_mean,
@@ -321,13 +322,13 @@ mvGWAS$methods(
 
 
     if ('DS' %in% all.vars(mean_alt_formula)) {
-      result <- dplyr::bind_cols(result, DS_beta_mean = DS_beta_mean, DS_se_mean = DS_se_mean, DS_z_mean = DS_beta_mean/DS_se_mean)
+      result <- cbind(result, DS_beta_mean = DS_beta_mean, DS_se_mean = DS_se_mean, DS_z_mean = DS_beta_mean/DS_se_mean)
     }
     if ('DS' %in% all.vars(var_alt_formula)) {
-      result <- dplyr::bind_cols(result, DS_beta_var = DS_beta_var, DS_se_var = DS_se_var, DS_z_var = DS_beta_var/DS_se_var)
+      result <- cbind(result, DS_beta_var = DS_beta_var, DS_se_var = DS_se_var, DS_z_var = DS_beta_var/DS_se_var)
     }
 
-    return(dplyr::bind_cols(fix_df, result))
+    return(tibble::as_tibble(cbind(fix_df, result)))
   }
 )
 
