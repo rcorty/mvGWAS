@@ -293,7 +293,7 @@ mvGWAS$methods(
     fix_df <- vcf@fix %>%
       dplyr::as_data_frame() %>%
       dplyr::select(-QUAL, -INFO) %>%
-      dplyr::mutate(POS = as.numeric(POS))
+      dplyr::mutate(POS = as.integer(POS))
 
     result <- dplyr::data_frame(n             = this_locus_n,
                                 LR_mean       = LR_mean,
