@@ -10,6 +10,7 @@
 #'
 #' @export mvGWAS
 #' @exportClass mvGWAS
+#' ##@importFrom dglm dglm    it's no use...
 #'
 mvGWAS <- setRefClass(
   Class = 'mvGWAS',
