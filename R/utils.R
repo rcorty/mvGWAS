@@ -128,7 +128,7 @@ pull_DS <- function(snp_row) {
 #' @return  a data.frame where the first column is the ID and the second and third columns are genotype probabilities
 #' @export
 #'
-pull_GP <- function(snp_row, min_gp) {
+pull_GP <- function(snp_row) {
 
   if (names(snp_row)[1] != 'FORMAT') {
     stop('First column in genotype section of VCF file must be "FORMAT".')
@@ -148,10 +148,7 @@ pull_GP <- function(snp_row, min_gp) {
     stop('Genoprobs dont add to 1.')
   }
 
-  genoprobs_zeroed <- replace(x = genoprobs_num, list = genoprobs_num < min_gp, values = 0)
-  genoprobs_oned <- replace(x = genoprobs_zeroed, list = genoprobs_zeroed > (1 - min_gp), values = 1)
-
-  genoprob_df <- as.data.frame(genoprobs_oned)
+  genoprob_df <- as.data.frame(genoprobs_num)
   names(genoprob_df) <- c('GP_ref', 'GP_het', 'GP_alt')
   genoprob_df$ID <- names(snp_row)
 
