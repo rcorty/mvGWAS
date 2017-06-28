@@ -428,8 +428,6 @@ mvGWAS$methods(
                           system = c('local', 'slurm'),
                           ...) {
 
-    usingMethods(determine_keyword_use_, stash_formula_, conduct_scan_local_, conduct_scan_slurm_)
-
     system <- match.arg(arg = system)
 
     determine_keyword_use_(mean_formula, var_formula)
