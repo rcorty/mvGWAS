@@ -448,6 +448,9 @@ mvGWAS$methods(
            'local' = conduct_scan_local_(...),
            'slurm' = conduct_scan_slurm_(...))
 
+    results$CHROM <<- factor(x = results$CHROM,
+                             levels = stringr::str_pad(string = unique(results$CHROM), width = 2, pad = '0'))
+
     return(TRUE)
 
   }
