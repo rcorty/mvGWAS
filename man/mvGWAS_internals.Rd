@@ -4,6 +4,8 @@
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
+\alias{mvGWAS_internals}
+\alias{mvGWAS_internals}
 \title{determine_keyword_use_}
 \arguments{
 \item{formula}{the formula to validate}
@@ -16,6 +18,10 @@ nothing
 nothing
 
 nothing
+
+TRUE if successful, FALSE otherwise.
+
+TRUE if successful, FALSE otherwise.
 }
 \description{
 determines which keywords are used in mean_formula and var_formula

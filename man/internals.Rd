@@ -16,7 +16,7 @@ pull_GT(snp_row, min_gt_count)
 
 pull_DS(snp_row)
 
-pull_GP(snp_row, min_gp)
+pull_GP(snp_row)
 }
 \arguments{
 \item{expr}{the expression to try to evaluate}
