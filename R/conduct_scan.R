@@ -172,10 +172,10 @@ mvGWAS$methods(
     this_locus_n <- rep(NA, num_snps)
 
     if ('DS' %in% all.vars(mean_alt_formula)) {
-      DS_beta_mean <- DS_se_mean <- rep(NA, num_snps)
+      beta_DS_mean <- se_DS_mean <- rep(NA, num_snps)
     }
     if ('DS' %in% all.vars(var_alt_formula)) {
-      DS_beta_var <- DS_se_var <- rep(NA, num_snps)
+      beta_DS_var <- se_DS_var <- rep(NA, num_snps)
     }
 
     last_locus_df <- dplyr::data_frame()
@@ -227,12 +227,12 @@ mvGWAS$methods(
       if (is.null(alt_fit)) { next }
 
       if ('DS' %in% all.vars(mean_alt_formula)) {
-        DS_beta_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Estimate']
-        DS_se_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Std. Error']
+        beta_DS_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Estimate']
+        se_DS_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Std. Error']
       }
       if ('DS' %in% all.vars(var_alt_formula)) {
-        DS_beta_var[snp_idx] <- coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate']
-        DS_se_var[snp_idx] <-coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error']
+        beta_DS_var[snp_idx] <- coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate']
+        se_DS_var[snp_idx] <-coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error']
       }
 
       # mean test
@@ -279,28 +279,29 @@ mvGWAS$methods(
       dplyr::mutate(POS = as.integer(POS),
                     vcf_file = file_name)
 
-    result <- dplyr::data_frame(n             = this_locus_n,
-                                LR_mean       = LR_mean,
-                                LR_var        = LR_var,
-                                LR_joint      = LR_joint,
-                                df_mean       = df_mean,
-                                df_var        = df_var,
-                                df_joint      = df_joint,
-                                mean_asymp_p  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
-                                var_asymp_p   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
-                                joint_asymp_p = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
+    result <- dplyr::data_frame(n        = this_locus_n,
+                                LR_mean  = LR_mean,
+                                LR_var   = LR_var,
+                                LR_joint = LR_joint,
+                                df_mean  = df_mean,
+                                df_var   = df_var,
+                                df_joint = df_joint,
+                                p_LR_mean  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
+                                p_LR_var   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
+                                p_LR_joint = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
 
 
     if ('DS' %in% all.vars(mean_alt_formula)) {
-      result <- cbind(result, DS_beta_mean = DS_beta_mean, DS_se_mean = DS_se_mean, DS_z_mean = DS_beta_mean/DS_se_mean)
+      result <- dplyr::bind_cols(result, dplyr::data_frame(beta_DS_mean = beta_DS_mean, se_DS_mean = se_DS_mean, z_DS_mean = beta_DS_mean/se_DS_mean))
     }
     if ('DS' %in% all.vars(var_alt_formula)) {
-      result <- cbind(result, DS_beta_var = DS_beta_var, DS_se_var = DS_se_var, DS_z_var = DS_beta_var/DS_se_var)
+      result <- dplyr::bind_cols(result, dplyr::data_frame(beta_DS_var = beta_DS_var, se_DS_var = se_DS_var, z_DS_var = beta_DS_var/se_DS_var))
     }
 
-    return(tibble::as_tibble(cbind(fix_df, result)))
+    return(dplyr::bind_cols(fix_df, result))
   }
 )
+
 
 
 #' @title conduct_scan_local_
