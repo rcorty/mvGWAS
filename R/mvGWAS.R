@@ -13,10 +13,15 @@
 #'
 mvGWAS <- setRefClass(
   Class = 'mvGWAS',
-  fields = list(metadata = 'list',
+  fields = list(created_at = 'character',
+                metadata = 'list',
                 data = 'list',
                 null_model = 'ANY',    # todo: make this DGLM, but need to import it beforehand or something
                 results = 'data.frame'))
+
+
+# could poentially lock more fields, but need to separate out things that can change from those that can't
+mvGWAS$lock('created_at')
 
 
 #' @title initialize
@@ -67,9 +72,9 @@ mvGWAS$methods(
     # definitely a dir containing at least one .VCF or .VCF.GZ file
     # maybe it can contain only that type of files?
 
+    created_at <<- as.character(Sys.time())
 
-    metadata <<- list(created_at = Sys.time(),
-                      phenotype_file = phenotype_file,
+    metadata <<- list(phenotype_file = phenotype_file,
                       genotype_directory = genotype_directory,
                       genotype_file_pattern = genotype_file_pattern,
                       available_keywords = c('GT', 'DS', 'GP'))
