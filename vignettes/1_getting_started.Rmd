@@ -1,0 +1,115 @@
+---
+title: "Getting Started with mvGWAS"
+author: "Robert W. Corty"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Now that you've installed and loaded the `mvGWAS` package [(instructions here)](https://github.com/rcorty/mvGWAS), let's run through a typical workflow.
+
+## Create an mvGWAS object
+
+To create an `mvGWAS` object, you'll need two things on your filesystem:
+
+1.  A directory with some .VCF or .VCF.GZ files in it.
+For now, set it up so there are just a few (<10) files each of which has only a few variants (<1000) on a few participants (<100).
+2.  A file with some phenotype data, either a .RDS file or a .CSV file.  
+The first column of the phenotype data _must_ be called 'ID' and contain an ID for each individual.
+This is the ID that will be used to match phenotype to the genotypes in the VCF files, so be sure you're using the same IDs.
+
+
+```{r example, eval=FALSE}
+library(mvGWAS)
+
+my_first_gwas <- mvGWAS$new(phenotype_file = 'my_phenotype_file.csv',
+                            genotype_directory = 'genotype_dir')
+```
+
+The first thing to note here is that we didn't define `mvGWAS`.
+That's because it's defined in the package `mvGWAS` and exported.
+It is a "reference object generator".
+When it's used as above, it generates a reference object.
+
+We've saved the reference object it generated as `my_first_gwas`.
+This object contains all the methods for conducting an mvGWAS.
+So, going forward, `my_first_gwas` will be where all the action is.
+
+
+
+## Conduct a 'genome' scan on the local machine
+
+We'll imagine that the handful of VCF files in `genotype_dir` represent the genome.
+Since there's not much data, we can conduct the whole scan on the local machine.
+We'll use the `conduct_scan` function, which takes two arguments: `mean_formula` and `var_formula`.
+They use the [model formula system](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/formula.html) that is typical in R.
+
+`mean_formula` is a two-sided formula.
+Its right side is just the phenotype to be analyzed.
+Its left side is covariates and keywords, separated by `+`.
+There are three keywords available:
+
+
+
+1.  DS -- the expected alternate allele dosage.
+From a linear model perspective, this generates a one-column numeric design matrix where entry $i$ is the expected alternate allele dosage of individual $i$.
+2.  GT -- the most likely genotype, a factor with up to 3 levels.
+From a linear model perspective, this generates a two-column binary design matrix with homozygote reference as the reference level.
+Entry [$i$,1] is 1 if the most likely genotype of individual $i$ is a heterozygote and 0 otherwise.
+Entry [$i$,2] is 1 if the most likely genotype of individual $i$ is homozygous for the alternate allele and 0 otherwise.
+3.  GP -- the probability of each genotype.
+From a linear model perspective, this generates a two-column numeric design matrix with complete certainty of homozygote reference as the reference level.
+Entry [$i$,1] is the probability that individual $i$ is a heterozygote.
+Entry [$i$,2] is the probability that individual $i$ is homozygrous for the alternate allele.
+
+
+`var_formula` is a one-sided formula.
+It has no left side.
+Its right side follows the same rules as `mean_formula`.
+
+
+```{r eval=FALSE}
+my_gwas$conduct_scan(mean_formula = my_trait ~ PC1 + PC2 + sex + age + DS,
+                     var_formula = ~ PC1 + PC2 + sex + GT)
+```
+
+By default, `conduct_scan()` runs on the local machine, using as many cores as are available (based on `parallel::detectCores()`).
+If you have a multi-core computer but don't want to use them all in `conduct_scan()`, you can pass in the maximum number of cores to use as `num_cores`.
+For example:
+
+```{r eval=FALSE}
+my_gwas$conduct_scan(mean_formula = my_trait ~ PC1 + PC2 + sex + age + DS,
+                     var_formula = ~ PC1 + PC2 + sex + GT,
+                     num_cores = 2)
+```
+
+If `conduct_scan()` returns `TRUE`, it worked without error and the results are accessible as `my_gwas$results`.
+
+## View the results
+
+```{r eval=FALSE}
+my_gwas$qq_plot()
+my_gwas$manhattan_plot()
+```
+
+## View the joint null model
+
+Because there are up to three hypotheses being tested, there are up to three null models.
+Only the null model for the joint test
+
+
+## Genomic control
+
+
+## Write the results to file
+
+```{r eval=FALSE}
+aaabbb
+
+```
+
+
+
