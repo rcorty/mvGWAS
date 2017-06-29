@@ -38,6 +38,15 @@ We've saved the reference object it generated as `my_first_gwas`.
 This object contains all the methods for conducting an mvGWAS.
 So, going forward, `my_first_gwas` will be where all the action is.
 
+If you don't want to scan all the VCF files in `genotype_directory`, you can also pass in `genotype_file_pattern`.
+If this argument is set, it restricts the VCF files that will be scanned to only those that match the pattern.
+For example, if you only want to scan chromosome 17 and you know that only the VCF files that relate to chromosome 17 will match the pattern 'chr17':
+
+```{r eval=FALSE}
+my_second_gwas <- mvGWAS$new(phenotype_file = 'my_phenotype_file.csv',
+                             genotype_directory = 'genotype_dir',
+                             genotype_file_pattern = 'chr17')
+```
 
 
 ## Conduct a 'genome' scan on the local machine
@@ -52,24 +61,20 @@ Its right side is just the phenotype to be analyzed.
 Its left side is covariates and keywords, separated by `+`.
 There are three keywords available:
 
-
-
 1.  DS -- the expected alternate allele dosage.
-From a linear model perspective, this generates a one-column numeric design matrix where entry $i$ is the expected alternate allele dosage of individual $i$.
+From a linear model perspective, this generates a one-column numeric design matrix where entry i is the expected alternate allele dosage of individual i.
 2.  GT -- the most likely genotype, a factor with up to 3 levels.
 From a linear model perspective, this generates a two-column binary design matrix with homozygote reference as the reference level.
-Entry [$i$,1] is 1 if the most likely genotype of individual $i$ is a heterozygote and 0 otherwise.
-Entry [$i$,2] is 1 if the most likely genotype of individual $i$ is homozygous for the alternate allele and 0 otherwise.
+Entry [i,1] is 1 if the most likely genotype of individual i is a heterozygote and 0 otherwise.
+Entry [i,2] is 1 if the most likely genotype of individual i is homozygous for the alternate allele and 0 otherwise.
 3.  GP -- the probability of each genotype.
 From a linear model perspective, this generates a two-column numeric design matrix with complete certainty of homozygote reference as the reference level.
-Entry [$i$,1] is the probability that individual $i$ is a heterozygote.
-Entry [$i$,2] is the probability that individual $i$ is homozygrous for the alternate allele.
-
+Entry [i,1] is the probability that individual i is a heterozygote.
+Entry [i,2] is the probability that individual i is homozygrous for the alternate allele.
 
 `var_formula` is a one-sided formula.
 It has no left side.
 Its right side follows the same rules as `mean_formula`.
-
 
 ```{r eval=FALSE}
 my_gwas$conduct_scan(mean_formula = my_trait ~ PC1 + PC2 + sex + age + DS,
@@ -86,14 +91,21 @@ my_gwas$conduct_scan(mean_formula = my_trait ~ PC1 + PC2 + sex + age + DS,
                      num_cores = 2)
 ```
 
-If `conduct_scan()` returns `TRUE`, it worked without error and the results are accessible as `my_gwas$results`.
+If `conduct_scan()` returns `TRUE`, it worked without error and the results are stored in `my_gwas$results`.
+
+
 
 ## View the results
+
+There are currently two plotting functions, `qq_plot` and `manhattan_plot`.
+They are used as follows:
 
 ```{r eval=FALSE}
 my_gwas$qq_plot()
 my_gwas$manhattan_plot()
 ```
+
+
 
 ## View the joint null model
 
