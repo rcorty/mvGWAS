@@ -29,3 +29,14 @@ Imports: dplyr,
     parallel,
     methods
 VignetteBuilder: knitr
+Collate: 
+    'InvestigateDGSNP.R'
+    'PermutationNullByDGSNP.R'
+    'PhenotypeByDGSNP.R'
+    'QQPlot.R'
+    'mvGWAS.R'
+    'conduct_scan.R'
+    'genomic_control.R'
+    'make_test_data.R'
+    'plots.R'
+    'utils.R'
