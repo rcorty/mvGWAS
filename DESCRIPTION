@@ -27,9 +27,10 @@ Imports: dplyr,
     tidyverse,
     vcfR,
     parallel,
-    methods
+    methods,
+    rlang
 VignetteBuilder: knitr
-Collate: 
+Collate:
     'InvestigateDGSNP.R'
     'PermutationNullByDGSNP.R'
     'PhenotypeByDGSNP.R'
