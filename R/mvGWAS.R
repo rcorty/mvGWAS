@@ -184,8 +184,7 @@ mvGWAS$methods(
 #'
 mvGWAS$methods(
   scan_vcf_file_ = function(file_name,
-                            min_gt_count = 5,
-                            min_gp = 0.05) {
+                            min_gt_count = 5) {
 
     # for local
     try(expr = attach(what = data, warn.conflicts = FALSE), silent = TRUE)
@@ -233,7 +232,7 @@ mvGWAS$methods(
       }
       if ('GP' %in% used_keywords) {
         this_locus_df <- dplyr::inner_join(x = this_locus_df,
-                                           y = pull_GP(snp_row = snp_row, min_gp = min_gp),
+                                           y = pull_GP(snp_row = snp_row),
                                            by = 'ID')
       }
 
