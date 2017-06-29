@@ -3,6 +3,8 @@
 mvGWAS
 ======
 
+[![codecov](https://codecov.io/gh/rcorty/mvGWAS/branch/master/graph/badge.svg?token=oiZ6s4qo2O)](https://codecov.io/gh/rcorty/mvGWAS)
+
 The goal of the mvGWAS package is to provide an easy-to-use interface for geneticists to conduct a mean-variance genome wide association study on a large number of genetic loci. This type of GWAS test each locus for association with phenotype mean and variance.
 
 At each locus, there are three questions (equivalently, three null hypotheses to test). Does an individual's genotype at this locus influence...
