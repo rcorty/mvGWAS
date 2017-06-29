@@ -122,9 +122,6 @@ pull_DS <- function(snp_row) {
 #' @description Pull the GP (genotype probabilities) from a vcf file snp row.
 #' @rdname internals
 #'
-#' @param min_gp Any genotype probabilities below this value are replaced with 0.
-#'     Any genotype probabilities above (1 - this value) are replaced with 1.
-#'
 #' @return  a data.frame where the first column is the ID and the second and third columns are genotype probabilities
 #' @export
 #'

@@ -1,12 +1,14 @@
-#' @title A Reference Class to represent a mean-variance GWAS
+#' @title Reference Class for Mean-Variance GWASs
 #' @name mvGWAS
 #'
 #' @description A reference class implementing a Mean-Variance Genome Wide Association Study
 #'
+#' @field created_at when the mvGWAS was created
 #' @field metadata information about the mvGWAS
 #' @field data the data used to conduct the mvGWAS
 #' @field null_model the model fit without any SNPs
 #' @field results the results of the mvGWAS
+#' @field genomic_control_dfs data_frames holding the details of genomic control corrections applied
 #'
 #' @export mvGWAS
 #' @exportClass mvGWAS
@@ -17,7 +19,8 @@ mvGWAS <- setRefClass(
                 metadata = 'list',
                 data = 'list',
                 null_model = 'ANY',    # todo: make this DGLM, but need to import it beforehand or something
-                results = 'data.frame'))
+                results = 'data.frame',
+                genomic_control_dfs = 'list'))
 
 
 # could poentially lock more fields, but need to separate out things that can change from those that can't
@@ -25,7 +28,7 @@ mvGWAS$lock('created_at')
 
 
 #' @title initialize
-#' @name mvGWAS_initialize
+#' @name mvGWAS
 #'
 #' @description Initialize an mvGWAS object
 #'
@@ -85,6 +88,11 @@ mvGWAS$methods(
 )
 
 
+
+# hack to make R CMD CHECK happy
+mvGWAS$methods(
+  new = initialize
+)
 
 
 
