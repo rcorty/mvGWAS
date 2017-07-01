@@ -82,12 +82,15 @@ mvGWAS$methods(
       if (is.null(alt_fit)) { next }
 
       if ('DS' %in% all.vars(mean_alt_formula)) {
-        beta_DS_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Estimate']
-        se_DS_mean[snp_idx] <- coef(summary(alt_fit))['DS', 'Std. Error']
+
+        beta_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit))['DS', 'Estimate'])
+        se_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit))['DS', 'Std. Error'])
+
       }
       if ('DS' %in% all.vars(var_alt_formula)) {
-        beta_DS_var[snp_idx] <- coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate']
-        se_DS_var[snp_idx] <-coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error']
+
+        beta_DS_var[snp_idx] <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate'])
+        se_DS_var[snp_idx] <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error'])
       }
 
       # mean test
