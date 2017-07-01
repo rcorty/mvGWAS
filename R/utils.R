@@ -71,7 +71,7 @@ pull_GT <- function(snp_row, min_gt_count) {
   # if there's any too-rare GT, drop it
   if (any(table(gts) < min_gt_count)) {
     bad_gts <- names(table(gts))[table(gts) < min_gt_count]
-    gts <- replace(x = gts, list = which(gts == bad_gts), values = NA)
+    gts <- replace(x = gts, list = which(gts %in% bad_gts), values = NA)
   }
 
   # if all the same GT, just return all 0's...
