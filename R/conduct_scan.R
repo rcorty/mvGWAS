@@ -152,10 +152,24 @@ mvGWAS$methods(
 
 
     if ('DS' %in% all.vars(mean_alt_formula)) {
-      result <- dplyr::bind_cols(result, dplyr::data_frame(beta_DS_mean = beta_DS_mean, se_DS_mean = se_DS_mean, z_DS_mean = beta_DS_mean/se_DS_mean))
+      result <- dplyr::bind_cols(result,
+                                 dplyr::data_frame(beta_DS_mean = beta_DS_mean,
+                                                   se_DS_mean = se_DS_mean,
+                                                   z_DS_mean = beta_DS_mean/se_DS_mean,
+                                                   p_z_DS_mean = dplyr::if_else(condition = z_DS_mean < 0,
+                                                                                true = pnorm(q = z_DS_mean),
+                                                                                false = pnorm(q = z_DS_mean, lower.tail = TRUE),
+                                                                                missing = NA_real_)))
     }
     if ('DS' %in% all.vars(var_alt_formula)) {
-      result <- dplyr::bind_cols(result, dplyr::data_frame(beta_DS_var = beta_DS_var, se_DS_var = se_DS_var, z_DS_var = beta_DS_var/se_DS_var))
+      result <- dplyr::bind_cols(result,
+                                 dplyr::data_frame(beta_DS_var = beta_DS_var,
+                                                   se_DS_var = se_DS_var,
+                                                   z_DS_var = beta_DS_var/se_DS_var,
+                                                   p_z_DS_var = dplyr::if_else(condition = z_DS_var < 0,
+                                                                               true = pnorm(q = z_DS_var),
+                                                                               false = pnorm(q = z_DS_var, lower.tail = TRUE),
+                                                                               missing = NA_real_)))
     }
 
     return(dplyr::bind_cols(fix_df, result))
