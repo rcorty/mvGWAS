@@ -277,7 +277,7 @@ mvGWAS$methods(
 #' @title conduct_scan_local_
 #' @name mvGWAS_conduct_scan
 #'
-#' @param num_cores the number of cores to use, defaults to parallel::detectCores()
+#' @param num_cores the number of cores to use for a local scan.  Defaults to \code{parallel::detectCores()}.
 #'
 #' @description conducts a genome scan locally
 #'
@@ -315,12 +315,20 @@ mvGWAS$methods(
 #'
 #' @description conducts a genome scan on a slurm cluster
 #'
+#' @param job_time_in_mins amount of time to request from SLURM for each job (in minutes).  Defaults to 360.
+#' @param vcf_files_per_job number of vcf files each job should scan.  Defaults to 1.
+#' @param max_num_jobs the maximum number of jobs to submit to SLURM.
+#'
+#' @details The actual number of jobs submitted to the cluster is \code{min(max_num_jobs, ceiling(num_vcf_files/vcf_files_per_job))}.
+#'
 #' @return nothing
 #'
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
-  conduct_scan_slurm_ = function(max_num_nodes = Inf, ...) {
+  conduct_scan_slurm_ = function(job_time_in_mins = 360,
+                                 vcf_files_per_job = 1,
+                                 max_num_jobs = Inf) {
 
     usingMethods(scan_vcf_file_)
 
@@ -330,14 +338,15 @@ mvGWAS$methods(
 
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
                                 params = dplyr::data_frame(file_name = genotype_files),
-                                nodes = min(max_num_nodes, length(genotype_files)),
+                                nodes = min(max_num_jobs, ceiling(length(genotype_files)/vcf_files_per_job)),
                                 cpus_per_node = 1,
                                 add_objects = list(mean_alt_formula = metadata$mean_alt_formula,
                                                    var_alt_formula = metadata$var_alt_formula,
                                                    mean_null_formula = metadata$mean_null_formula,
                                                    var_null_formula = metadata$var_null_formula,
                                                    used_keywords = metadata$used_keywords,
-                                                   phenotypes = data$phenotypes))
+                                                   phenotypes = data$phenotypes),
+                                slurm_options = list(time = job_time_in_mins))
 
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
