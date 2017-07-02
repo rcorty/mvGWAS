@@ -139,17 +139,16 @@ mvGWAS$methods(
       dplyr::mutate(POS = as.integer(POS),
                     vcf_file = file_name)
 
-    result <- dplyr::data_frame(n        = this_locus_n,
-                                LR_mean  = LR_mean,
-                                LR_var   = LR_var,
-                                LR_joint = LR_joint,
-                                df_mean  = df_mean,
-                                df_var   = df_var,
-                                df_joint = df_joint,
+    result <- dplyr::data_frame(n          = this_locus_n,
+                                LR_mean    = LR_mean,
+                                LR_var     = LR_var,
+                                LR_joint   = LR_joint,
+                                df_mean    = df_mean,
+                                df_var     = df_var,
+                                df_joint   = df_joint,
                                 p_LR_mean  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
                                 p_LR_var   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
                                 p_LR_joint = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
-
 
     if ('DS' %in% all.vars(mean_alt_formula)) {
       result <- dplyr::bind_cols(result,
@@ -305,7 +304,8 @@ mvGWAS$methods(
                                          FUN = scan_vcf_file_)
     }
 
-    results <<- results_list %>% dplyr::bind_rows()
+    results <<- results_list %>%
+      dplyr::bind_rows()
   }
 )
 
@@ -343,8 +343,8 @@ mvGWAS$methods(
 
     results_list <- rslurm::get_slurm_out(slr_job = sjob, outtype = "raw", wait = TRUE)
 
-    results <<- results_list %>% dplyr::bind_rows()
-
+    results <<- results_list %>%
+      dplyr::bind_rows()
   }
 )
 
