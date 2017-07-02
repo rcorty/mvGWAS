@@ -63,33 +63,46 @@ mvGWAS$methods(
 #' @title qq_plot
 #' @name mvGWAS_qq_plot
 #'
-#' @description makes a Manhattan plot
+#' @description makes a qq plot for a mvGWAS
+#'
+#' @param what what qq to plot
+#' @param log_p whether to use (negative) log10 scale or not
+#' @param gc whether to use genomic controlled values or not
 #'
 #' @return the plot
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
-  qq_plot = function(what_to_plot,
-                     theoretical = 'unif') {
+  qq_plot = function(what = c('p_LR', 'p_z_DS'),
+                     log_p = TRUE) {
 
-    v <- results[[what_to_plot]]
 
-    for_plotting <- dplyr::data_frame(obs = sort(v),
-                                      theo = seq(from = 0, to = 1, length.out = sum(!is.na(v))))
+    what <- match.arg(arg = what)
 
-    ggplot2::ggplot() +
-      ggplot2::geom_segment(data = dplyr::data_frame(start = 0, stop = 1),
-                            mapping = ggplot2::aes(x = start, y = start, xend = stop, yend = stop),
-                            color = 'gray') +
-      ggplot2::geom_point(data = for_plotting,
-                          mapping = ggplot2::aes(x = theo, y = obs)) +
-      ggplot2::ggtitle(label = paste0('QQ plot of ', what_to_plot)) +
+    results %>%
+      dplyr::select(dplyr::matches(what)) %>%
+      tidyr::gather(key = test, value = obs_p) %>%
+      na.omit() %>%
+      dplyr::mutate(gc = grepl(pattern = '_gc$', x = test),
+                    test = gsub(pattern = '_gc$', replacement = '', x = test),
+                    test = factor(x = test, levels = paste0(what, '_', c('mean', 'var', 'joint')))) %>%
+      dplyr::group_by(test, gc) %>%
+      dplyr::mutate(obs_p = sort(x = obs_p),
+                    exp_p = seq(from = 1/(2*n()), to = 1 - (1/(2*n())), length.out = n())) %>%
+      ggplot2::ggplot(mapping = ggplot2::aes(x = if (log_p) -log10(exp_p) else exp_p,
+                                             y = if (log_p) -log10(obs_p) else obs_p,
+                                             color = test,
+                                             shape = gc)) +
+      ggplot2::geom_abline(slope = 1, intercept = 0) +
+      ggplot2::geom_point() +
+      ggplot2::coord_fixed() +
+      ggplot2::xlab('theoretical') +
+      ggplot2::ylab('observed') +
+      ggplot2::theme_minimal() +
+      ggplot2::ggtitle(label = paste0(metadata$mean_alt_formula[[2]], ': QQ plot of ', what)) +
       ggplot2::theme_minimal() +
       ggplot2::theme(axis.ticks = ggplot2::element_blank(),
-                     axis.text = ggplot2::element_blank()) +
-      ggplot2::xlab('Theoretical uniform distribution') +
-      ggplot2::ylab('Observed p values')
-
+                     axis.text = ggplot2::element_blank())
 
   }
 )
