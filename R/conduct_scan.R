@@ -337,7 +337,6 @@ mvGWAS$methods(
                                                    mean_null_formula = metadata$mean_null_formula,
                                                    var_null_formula = metadata$var_null_formula,
                                                    used_keywords = metadata$used_keywords,
-                                                   null_model = null_model,
                                                    phenotypes = data$phenotypes))
 
 
