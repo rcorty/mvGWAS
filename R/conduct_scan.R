@@ -385,7 +385,8 @@ mvGWAS$methods(
 
     null_model <<- dglm::dglm(formula = metadata$mean_null_formula,
                               dformula = metadata$var_null_formula,
-                              data = data$phenotypes)
+                              data = data$phenotypes,
+                              method = 'reml')
 
     if (length(metadata$used_keywords) == 0) {
       message('No keywords in mean_formula nor var_formula.  Returning without scanny any SNPs.')
