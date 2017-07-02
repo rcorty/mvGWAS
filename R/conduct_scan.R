@@ -398,9 +398,8 @@ mvGWAS$methods(
            'slurm' = conduct_scan_slurm_(...))
 
     results <<- results %>%
-      dplyr::mutate(CHROM = factor(CHROM,
-                                   levels = stringr::str_pad(string = unique(results$CHROM), width = 2, pad = '0')))
-
+      dplyr::mutate(CHROM = factor(x = stringr::str_pad(string = CHROM, width = 2, pad = '0'),
+                                   levels = sort(stringr::str_pad(string = unique(CHROM), width = 2, pad = '0'))))
     return(TRUE)
 
   }
