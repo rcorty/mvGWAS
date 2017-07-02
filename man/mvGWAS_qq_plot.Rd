@@ -3,9 +3,16 @@
 \name{mvGWAS_qq_plot}
 \alias{mvGWAS_qq_plot}
 \title{qq_plot}
+\arguments{
+\item{what}{what qq to plot}
+
+\item{log_p}{whether to use (negative) log10 scale or not}
+
+\item{gc}{whether to use genomic controlled values or not}
+}
 \value{
 the plot
 }
 \description{
-makes a Manhattan plot
+makes a qq plot for a mvGWAS
 }

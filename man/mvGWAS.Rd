@@ -3,13 +3,26 @@
 \docType{class}
 \name{mvGWAS}
 \alias{mvGWAS}
-\title{A Reference Class to represent a mean-variance GWAS}
+\alias{mvGWAS}
+\title{Reference Class for Mean-Variance GWASs}
+\arguments{
+\item{phenotype_file}{The file that stores the phenotypes.  Must be a .CSV or .RDS.  Must have one column called 'ID'.}
+
+\item{genotype_directory}{The directory that stores the genotypes.  They must be in .vcf.gz format.}
+}
+\value{
+an mvGWAS object
+}
 \description{
 A reference class implementing a Mean-Variance Genome Wide Association Study
+
+Initialize an mvGWAS object
 }
 \section{Fields}{
 
 \describe{
+\item{\code{created_at}}{when the mvGWAS was created}
+
 \item{\code{metadata}}{information about the mvGWAS}
 
 \item{\code{data}}{the data used to conduct the mvGWAS}
@@ -17,6 +30,8 @@ A reference class implementing a Mean-Variance Genome Wide Association Study
 \item{\code{null_model}}{the model fit without any SNPs}
 
 \item{\code{results}}{the results of the mvGWAS}
+
+\item{\code{genomic_control_dfs}}{data_frames holding the details of genomic control corrections applied}
 }}
 
 

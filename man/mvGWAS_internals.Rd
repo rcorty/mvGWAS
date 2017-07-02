@@ -6,7 +6,7 @@
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
 \alias{mvGWAS_internals}
-\title{determine_keyword_use_}
+\title{scan_vcf_file_}
 \arguments{
 \item{formula}{the formula to validate}
 

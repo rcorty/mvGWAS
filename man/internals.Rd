@@ -25,9 +25,6 @@ pull_GP(snp_row)
 
 \item{min_gt_count}{minimum number of observations required to keep a genotype group in the study.
 Five is the default, but I advocate a slightly higher value for research (10 or 20 maybe).}
-
-\item{min_gp}{Any genotype probabilities below this value are replaced with 0.
-Any genotype probabilities above (1 - this value) are replaced with 1.}
 }
 \value{
 If the expression evaluates without error, the evaluated expression.

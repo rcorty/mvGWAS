@@ -4,27 +4,36 @@
 \alias{mvGWAS_conduct_scan}
 \alias{mvGWAS_conduct_scan}
 \alias{mvGWAS_conduct_scan}
-\title{conduct_scan}
+\title{conduct_scan_local_}
 \arguments{
+\item{num_cores}{the number of cores to use for a local scan.  Defaults to \code{parallel::detectCores()}.}
+
+\item{job_time_in_mins}{amount of time to request from SLURM for each job (in minutes).  Defaults to 360.}
+
+\item{vcf_files_per_job}{number of vcf files each job should scan.  Defaults to 1.}
+
+\item{max_num_jobs}{the maximum number of jobs to submit to SLURM.}
+
 \item{mean_formula}{the mean formula}
 
 \item{var_formula}{the variance formula}
 
 \item{computer}{Either 'local' (default) or 'slurm'. Should the scan be conducted on the local machine or on a slurm cluster.}
-
-\item{num_cores}{the number of cores to use, defaults to parallel::detectCores()}
 }
 \value{
+nothing
+
+nothing
+
 the mvGWAS object  (change this?)
-
-nothing
-
-nothing
 }
 \description{
-conducts an mvGWAS
-
 conducts a genome scan locally
 
 conducts a genome scan on a slurm cluster
+
+conducts an mvGWAS
+}
+\details{
+The actual number of jobs submitted to the cluster is \code{min(max_num_jobs, ceiling(num_vcf_files/vcf_files_per_job))}.
 }
