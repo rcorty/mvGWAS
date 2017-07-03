@@ -7,15 +7,14 @@
 #' @return TRUE if successful, FALSE otherwise.
 #'
 mvGWAS$methods(
-  apply_genomic_control = function(keyword = c('LR', 'DS', 'GT', 'GP'),
-                                   method = c('zsquared', 'z')) {
+  apply_genomic_control = function(method = c('LR', 'z_DS', 'z2_DS')) {
 
-    keyword <- match.arg(arg = keyword)
     method <- match.arg(arg = method)
 
-    switch(EXPR = method,
-           LR = apply_genomic_control_LR_(),
-           z = apply_genomic_control_DS_(method = method),
+    switch(EXPR  = method,
+           LR    = apply_genomic_control_LR_(),
+           z_DS  = apply_genomic_control_z_DS_(),
+           z2_DS = apply_genomic_control_z2_DS_(),
            FALSE)
   }
 )
@@ -63,22 +62,23 @@ mvGWAS$methods(
 
     LR_col_name <- paste0('LR_', test)
     df_col_name <- paste0('df_', test)
-    lambda_col_name <- paste0('gc_lambda_', test)
+
+    LR_col_name_gc <- paste0(LR_col_name, '_gc')
+    p_LR_col_name_gc <- paste0('p_', LR_col_name_gc)
+
 
     lambda_df <- results %>%
       dplyr::group_by(UQ(sym(df_col_name))) %>%
       dplyr::summarise(obs_median_LR = median(x = UQ(sym(LR_col_name)), na.rm = TRUE)) %>%
       dplyr::mutate(expected_median_LR = qchisq(p = 0.5, df = UQ(sym(df_col_name))),
-                    UQ(lambda_col_name) := obs_median_LR / expected_median_LR)
+                    lambda = obs_median_LR / expected_median_LR)
 
-    LR_gc_col_name <- paste0(LR_col_name, '_gc')
-
-    new_cols <- results %>%
+    results <<- results %>%
       inner_join(y = lambda_df, by = df_col_name) %>%
-      mutate(UQ(LR_gc_col_name) := UQ(sym(LR_col_name)) / UQ(sym(lambda_col_name))) %>%
-      select(UQ(sym(LR_gc_col_name)), UQ(sym(lambda_col_name)))
+      mutate(UQ(LR_col_name_gc) := UQ(sym(LR_col_name)) / lambda,
+             UQ(p_LR_col_name_gc) := pchisq(q = LR_gc,  df = UQ(sym(df_col_name)),  lower.tail = FALSE))
 
-    results <<- bind_cols(results, new_cols)
+    genomic_control_dfs[[paste0('LR_', test)]] <<- na.omit(lambda_df)
 
   }
 )
