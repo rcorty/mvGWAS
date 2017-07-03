@@ -6,15 +6,13 @@
 #'
 mvGWAS$methods(
   scan_vcf_file_ = function(file_name,
+                            phenotypes,
+                            mean_alt_formula,
+                            var_alt_formula,
+                            mean_null_formula,
+                            var_null_formula,
+                            used_keywords,
                             min_gt_count = 5) {
-
-    # for local
-    try(expr = attach(what = data, warn.conflicts = FALSE), silent = TRUE)
-    try(expr = attach(what = metadata, warn.conflicts = FALSE), silent = TRUE)
-
-    # for SLURM
-    try(expr = attach(what = add_objects, warn.conflicts = FALSE), silent = TRUE)
-
 
     vcf <- vcfR::read.vcfR(file = file_name, verbose = FALSE)
 
@@ -298,10 +296,22 @@ mvGWAS$methods(
     # bc user likely doesn't have parallel package installed
     if (num_cores == 1) {
       results_list <- lapply(X = genotype_files,
-                             FUN = scan_vcf_file_)
+                             FUN = scan_vcf_file_,
+                             phenotypes = data$phenotypes,
+                             mean_alt_formula = metadata$mean_alt_formula,
+                             var_alt_formula = metadata$var_alt_formula,
+                             mean_null_formula = metadata$mean_null_formula,
+                             var_null_formula = metadata$var_null_formula,
+                             used_keywords = metadata$used_keywords)
     } else {
       results_list <- parallel::mclapply(X = genotype_files,
-                                         FUN = scan_vcf_file_)
+                                         FUN = scan_vcf_file_,
+                                         phenotypes = data$phenotypes,
+                                         mean_alt_formula = metadata$mean_alt_formula,
+                                         var_alt_formula = metadata$var_alt_formula,
+                                         mean_null_formula = metadata$mean_null_formula,
+                                         var_null_formula = metadata$var_null_formula,
+                                         used_keywords = metadata$used_keywords)
     }
 
     results <<- results_list %>%
@@ -337,15 +347,15 @@ mvGWAS$methods(
                                  pattern = metadata$genotype_file_pattern)
 
     sjob <- rslurm::slurm_apply(f = scan_vcf_file_,
-                                params = dplyr::data_frame(file_name = genotype_files),
+                                params = dplyr::data_frame(file_name = genotype_files,
+                                                           phenotypes = data$phenotypes,
+                                                           mean_alt_formula = metadata$mean_alt_formula,
+                                                           var_alt_formula = metadata$var_alt_formula,
+                                                           mean_null_formula = metadata$mean_null_formula,
+                                                           var_null_formula = metadata$var_null_formula,
+                                                           used_keywords = metadata$used_keywords),
                                 nodes = min(max_num_jobs, ceiling(length(genotype_files)/vcf_files_per_job)),
                                 cpus_per_node = 1,
-                                add_objects = list(mean_alt_formula = metadata$mean_alt_formula,
-                                                   var_alt_formula = metadata$var_alt_formula,
-                                                   mean_null_formula = metadata$mean_null_formula,
-                                                   var_null_formula = metadata$var_null_formula,
-                                                   used_keywords = metadata$used_keywords,
-                                                   phenotypes = data$phenotypes),
                                 slurm_options = list(time = job_time_in_mins))
 
 
