@@ -11,7 +11,6 @@
 #' @field genomic_control_dfs data_frames holding the details of genomic control corrections applied
 #'
 #' @export mvGWAS
-#' @exportClass mvGWAS
 #'
 mvGWAS <- setRefClass(
   Class = 'mvGWAS',
