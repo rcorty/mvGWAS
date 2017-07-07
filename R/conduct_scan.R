@@ -75,15 +75,22 @@ mvGWAS$methods(
                                     data = this_locus_df,
                                     method = 'ml'))
 
-      # if we couldn't fit the alt model, move on
-      if (is.null(alt_fit)) { next }
+      # if we couldn't fit the alt model, COMPLETELY, move on
+      # I believe that when one coef is NA (not estimated) it causes problems later
+      # e.g. with calculating the df of a test
+      if (is.null(alt_fit)) {
+        next
+      }
+      if (any(is.na(coef(alt_fit)), is.na(coef(alt_fit$dispersion.fit)))) {
+        next
+      }
 
       if ('DS' %in% all.vars(mean_alt_formula)) {
 
         beta_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit))['DS', 'Estimate'])
         se_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit))['DS', 'Std. Error'])
-
       }
+
       if ('DS' %in% all.vars(var_alt_formula)) {
 
         beta_DS_var[snp_idx] <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate'])
@@ -100,6 +107,8 @@ mvGWAS$methods(
         if (is.null(mean_null_fit)) { next }
         LR_mean[snp_idx] <- mean_null_fit$m2loglik - alt_fit$m2loglik
         df_mean[snp_idx] <- df.residual(mean_null_fit) - df.residual(alt_fit)
+
+        # if (df_mean[snp_idx] == 0) { browser() }
       }
 
       # var test
