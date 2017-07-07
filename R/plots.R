@@ -74,21 +74,33 @@ mvGWAS$methods(
 #'
 mvGWAS$methods(
   qq_plot = function(what = c('p_LR', 'p_z_DS'),
+                     num_quantiles = 1000,
+                     top_n = 1000,
                      log_p = TRUE) {
 
 
     what <- match.arg(arg = what)
 
-    results %>%
+    quantiles <- seq(from = (0.5/num_quantiles), to = 1 - (0.5/num_quantiles), length.out = num_quantiles)
+
+
+    d <- results %>%
       dplyr::select(dplyr::matches(what)) %>%
       tidyr::gather(key = test, value = obs_p) %>%
-      na.omit() %>%
-      dplyr::mutate(gc = grepl(pattern = '_gc$', x = test),
-                    test = gsub(pattern = '_gc$', replacement = '', x = test),
-                    test = factor(x = test, levels = paste0(what, '_', c('mean', 'var', 'joint')))) %>%
-      dplyr::group_by(test, gc) %>%
-      dplyr::mutate(obs_p = sort(x = obs_p),
-                    exp_p = seq(from = 1/(2*n()), to = 1 - (1/(2*n())), length.out = n())) %>%
+      dplyr::group_by(test) %>%
+      # dplyr::mutate(gc = grepl(pattern = '_gc$', x = test),
+      #               test = gsub(pattern = '_gc$', replacement = '', x = test),
+      #               test = factor(x = test, levels = paste0(what, '_', c('mean', 'var', 'joint')))) %>%
+      # dplyr::group_by(test, gc) %>%
+      dplyr::do(dplyr::data_frame(exp = quantiles,
+                                  obs = quantile(x = .$obs_p,
+                                                 probs = quantiles,
+                                                 na.rm = TRUE,
+                                                 names = FALSE)))
+
+
+
+    d %>%
       ggplot2::ggplot(mapping = ggplot2::aes(x = if (log_p) -log10(exp_p) else exp_p,
                                              y = if (log_p) -log10(obs_p) else obs_p,
                                              color = test,
