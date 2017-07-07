@@ -26,7 +26,7 @@ mvGWAS$methods(
 
     column_regex <- paste0('^', what, '.*', if (gc) '_gc$')
 
-    to_plot <- gwas1$results %>%
+    to_plot <- results %>%
       dplyr::select(matches(column_regex), CHROM, POS) %>%
       tidyr::gather(key = test, value = p, matches(column_regex)) %>%
       na.omit() %>%
