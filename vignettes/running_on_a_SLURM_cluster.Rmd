@@ -1,0 +1,21 @@
+---
+title: "Vignette Title"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Run an mvGWAS on a SLURM cluster
+
+It requires a custom version of the `rslurm` package (I've submitted my changes to the maintainers of the official version of `rslurm` but they're yet to reply.)
+So install that as well.
+
+```{r eval=FALSE}
+devtools::install_github("rcorty/rslurm")
+```
+
+
