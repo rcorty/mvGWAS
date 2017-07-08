@@ -14,4 +14,18 @@ TRUE if successful, FALSE otherwise.
 }
 \description{
 Applies genomic control
+
+#' @title apply_genomic_control_DS_
+#' @name mvGWAS_apply_genomic_control
+#'
+#' @return TRUE if successful, FALSE otherwise.
+#'
+#' @title gc_DS_one_test_
+#' @name mvGWAS_internals
+#'
+#' @return TRUE if successful, FALSE otherwise.
+#' @importFrom dplyr %>%
+#' @importFrom rlang UQ
+#' @importFrom rlang sym
+#'
 }

@@ -84,22 +84,69 @@ mvGWAS$methods(
 )
 
 
+#' #' @title apply_genomic_control_DS_
+#' #' @name mvGWAS_apply_genomic_control
+#' #'
+#' #' @return TRUE if successful, FALSE otherwise.
+#' #'
+# mvGWAS$methods(
+#   apply_genomic_control_z_DS_ = function(method) {
+#
+#     if ('z_DS_mean' %in% names(results)) {
+#       gc_z_DS_one_test_(test = 'mean', method = method)
+#     }
+#     if ('z_DS_var' %in% names(results)) {
+#       gc_z_DS_one_test_(test = 'var', method = method)
+#     }
+#
+#     return(TRUE)
+#   }
+# )
+#
+#
+#
+#' #' @title gc_DS_one_test_
+#' #' @name mvGWAS_internals
+#' #'
+#' #' @return TRUE if successful, FALSE otherwise.
+#' #' @importFrom dplyr %>%
+#' #' @importFrom rlang UQ
+#' #' @importFrom rlang sym
+#' #'
+# mvGWAS$methods(
+#   gc_z_DS_one_test_ = function(test) {
+#
+#     z_DS_col_name <- paste0('z_DS_', test)
+#
+#     z_DS_col_name_gc <- paste0(z_DS_col_name, '_gcz')
+#     p_z_DS_col_name_gc <- paste0('p_', z_DS_z_col_name_gc)
+#
+#     quantiles <- results %>% dplyr::pull(UQ(sym(z_DS_col_name))^2) %>% quantile(probs = c(0.4, 0.5, 0.6))
+#
+#     results <<- results %>%
+#       mutate(UQ(z_DS_col_name_gcz))
+#       mutate(z_DS_gc := UQ(sym(z_DS_col_name)) / sqrt(lambda_df$lambda[1])) %>%
+#       pull(z_DS_gc)
+#
+#     genomic_control_dfs[[paste0('z_DS_', test)]] <<- dplyr::data_frame(lambda = lambda)
+#
+#   }
+# )
 
 
-
-#' @title apply_genomic_control_DS_
+#' @title apply_genomic_control_z2_DS_
 #' @name mvGWAS_apply_genomic_control
 #'
 #' @return TRUE if successful, FALSE otherwise.
 #'
 mvGWAS$methods(
-  apply_genomic_control_DS_ = function(method) {
+  apply_genomic_control_z2_DS_ = function() {
 
-    if ('DS_z_mean' %in% names(results)) {
-      gc_DS_one_test_(test = 'mean', method = method)
+    if ('z_DS_mean' %in% names(results)) {
+      gc_z2_DS_one_test_(test = 'mean')
     }
-    if ('DS_z_var' %in% names(results)) {
-      gc_DS_one_test_(test = 'var', method = method)
+    if ('z_DS_var' %in% names(results)) {
+      gc_z2_DS_one_test_(test = 'var')
     }
 
     return(TRUE)
@@ -108,7 +155,8 @@ mvGWAS$methods(
 
 
 
-#' @title gc_DS_one_test_
+
+#' @title gc_LR_one_test_
 #' @name mvGWAS_internals
 #'
 #' @return TRUE if successful, FALSE otherwise.
@@ -117,23 +165,29 @@ mvGWAS$methods(
 #' @importFrom rlang sym
 #'
 mvGWAS$methods(
-  gc_DS_one_test_ = function(test) {
+  gc_z2_DS_one_test_ = function(test) {
 
-    DS_z_col_name <- paste0('DS_z_', test)
-    lambda_col_name <- paste0('gc_lambda_', test)
-    DS_z_gc_col_name <- paste0(DS_z_col_name, '_gc')
+    z_DS_col_name <- paste0('z_DS_', test)
 
-    lambda_df <- results %>%
-      dplyr::summarise(median_zsq = median(x = UQ(sym(DS_z_col_name))^2, na.rm = TRUE)) %>%
-      dplyr::mutate(UQ(lambda_col_name) := median_zsq / qchisq(p = 0.5, df = 1))
+    z_DS_col_name_gc <- paste0(z_DS_col_name, '_gcz2')
+    p_z_DS_col_name_gc <- paste0('p_', z_DS_col_name_gc)
 
 
-    new_cols <- results %>%
-      mutate(UQ(lambda_col_name) := lambda_df %>% pull(lambda_col_name),
-             UQ(DS_z_gc_col_name) := UQ(sym(DS_z_col_name)) / sqrt(UQ(sym(lambda_col_name)))) %>%
-      select(UQ(sym(lambda_col_name)), UQ(sym(DS_z_gc_col_name)))
+    lambda <- results %>%
+      pull(UQ(sym(z_DS_col_name))) %>%
+      `^`(2) %>%
+      median(na.rm = TRUE) %>%
+      `/`(qchisq(p = 0.5, df = 1))
 
-    results <<- bind_cols(results, new_cols)
+    results <<- results %>%
+      mutate(UQ(z_DS_col_name_gc) := UQ(sym(z_DS_col_name)) / lambda,
+             UQ(p_z_DS_col_name_gc) := dplyr::if_else(condition = UQ(sym(z_DS_col_name_gc)) < 0,
+                                                     true = pnorm(q = UQ(sym(z_DS_col_name_gc))),
+                                                     false = pnorm(q = UQ(sym(z_DS_col_name_gc)), lower.tail = TRUE),
+                                                     missing = NA_real_))
+
+
+    genomic_control_dfs[[paste0('z2_DS_', test)]] <<- dplyr::data_frame(lambda = lambda)
 
   }
 )
