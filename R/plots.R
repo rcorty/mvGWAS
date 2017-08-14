@@ -27,8 +27,8 @@ mvGWAS$methods(
     column_regex <- paste0('^', what, '.*', if (gc) '_gc$')
 
     to_plot <- results %>%
-      dplyr::select(matches(column_regex), CHROM, POS) %>%
-      tidyr::gather(key = test, value = p, matches(column_regex)) %>%
+      dplyr::select(dplyr::matches(column_regex), CHROM, POS) %>%
+      tidyr::gather(key = test, value = p, dplyr::matches(column_regex)) %>%
       na.omit() %>%
       dplyr::mutate(nlog_p = -log(p, base = 10))
     # dplyr::mutate(test = dplyr::recode(test, mean_asymp_p = 'mean', var_asymp_p = 'var', joint_asymp_p = 'joint'))
