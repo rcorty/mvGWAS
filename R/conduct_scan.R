@@ -21,6 +21,8 @@ mvGWAS$methods(
 
     num_snps <- dim(vcf)[1]
     num_indivs <- dim(vcf)[3] - 1
+    message('num_snps: ', num_snps)
+    message('num_indivs: ', num_indivs)
 
     LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
     df_mean <- df_var <- df_joint <- rep(NA, num_snps)
@@ -36,6 +38,8 @@ mvGWAS$methods(
     last_locus_df <- dplyr::data_frame()
 
     for (snp_idx in 1:num_snps) {
+
+      # message('Starting SNP ', snp_idx)
 
       this_locus_df <- phenotypes
 
