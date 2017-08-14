@@ -39,6 +39,7 @@ mvGWAS$lock('created_at')
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
+
   initialize = function(phenotype_file,
                         genotype_directory,
                         genotype_file_pattern = '.*\\.(vcf|VCF)') {
@@ -82,8 +83,8 @@ mvGWAS$methods(
                       available_keywords = c('GT', 'DS', 'GP'))
 
     data <<- list(phenotypes = phenotypes)
-
   }
+
 )
 
 

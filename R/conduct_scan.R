@@ -5,6 +5,7 @@
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
+
   scan_vcf_file_ = function(file_name,
                             min_gt_count = 5) {
 
@@ -182,6 +183,7 @@ mvGWAS$methods(
 
     return(dplyr::bind_cols(fix_df, result))
   }
+
 )
 
 
@@ -194,13 +196,14 @@ mvGWAS$methods(
 #' @return nothing
 #'
 mvGWAS$methods(
+
   determine_keyword_use_ = function(mean_formula, var_formula) {
 
     used_keyword_idxs <- metadata$available_keywords %in% c(all.vars(mean_formula), all.vars(var_formula))
 
     metadata$used_keywords <<- metadata$available_keywords[used_keyword_idxs]
-
   }
+
 )
 
 
@@ -215,6 +218,7 @@ mvGWAS$methods(
 #' @return nothing
 #'
 mvGWAS$methods(
+
   stash_formula_ = function(formula, type = c('mean', 'var')) {
 
     type <- match.arg(arg = type)
@@ -270,13 +274,8 @@ mvGWAS$methods(
 
     metadata[[paste0(type, '_null_formula')]] <<- null_formula
     metadata[[paste0(type, '_alt_formula')]] <<- alt_formula
-
-
-
-
-
-
   }
+
 )
 
 
@@ -295,6 +294,7 @@ mvGWAS$methods(
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
+
   conduct_scan_local_ = function(num_cores = parallel::detectCores()) {
 
     usingMethods(scan_vcf_file_)
@@ -316,6 +316,7 @@ mvGWAS$methods(
     results <<- results_list %>%
       dplyr::bind_rows()
   }
+
 )
 
 
@@ -335,6 +336,7 @@ mvGWAS$methods(
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
+
   conduct_scan_slurm_ = function(job_time_in_mins = 360,
                                  vcf_files_per_job = 1,
                                  max_num_jobs = Inf) {
@@ -363,6 +365,7 @@ mvGWAS$methods(
     results <<- results_list %>%
       dplyr::bind_rows()
   }
+
 )
 
 
@@ -380,6 +383,7 @@ mvGWAS$methods(
 #' @return the mvGWAS object  (change this?)
 #'
 mvGWAS$methods(
+
   conduct_scan = function(mean_formula,
                           var_formula,
                           system = c('local', 'slurm'),
@@ -410,8 +414,8 @@ mvGWAS$methods(
       dplyr::mutate(CHROM = factor(x = stringr::str_pad(string = CHROM, width = 2, pad = '0'),
                                    levels = sort(stringr::str_pad(string = unique(CHROM), width = 2, pad = '0'))))
     return(TRUE)
-
   }
+
 )
 
 

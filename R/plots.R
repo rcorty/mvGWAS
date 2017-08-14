@@ -53,8 +53,8 @@ mvGWAS$methods(
                      panel.grid.minor.x = ggplot2::element_blank()) +
       ggplot2::xlab('Chromosome and position in Mb') +
       ggplot2::ylab('-log10(p)')
-
   }
+
 )
 
 
@@ -73,6 +73,7 @@ mvGWAS$methods(
 #' @importFrom dplyr %>%
 #'
 mvGWAS$methods(
+
   qq_plot = function(what = c('p_LR', 'p_z_DS'),
                      num_quantiles = 1000,
                      top_n = 1000,
