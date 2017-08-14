@@ -73,10 +73,9 @@ mvGWAS$methods(
       this_locus_n[snp_idx] <- nrow(this_locus_df)
       if (nrow(this_locus_df) == 0) { next }
 
-      alt_fit <- tryNULL(dglm::dglm(formula = mean_alt_formula,
-                                    dformula = var_alt_formula,
-                                    data = this_locus_df,
-                                    method = 'ml'))
+      alt_fit <- tryNULL(DGLM_norm(m.form = mean_alt_formula,
+                                   d.form = var_alt_formula,
+                                   data = this_locus_df))
 
       # if we couldn't fit the alt model, COMPLETELY, move on
       # I believe that when one coef is NA (not estimated) it causes problems later
@@ -84,14 +83,14 @@ mvGWAS$methods(
       if (is.null(alt_fit)) {
         next
       }
-      if (any(is.na(coef(alt_fit)), is.na(coef(alt_fit$dispersion.fit)))) {
-        next
-      }
+      # if (any(is.na(coef(alt_fit)), is.na(coef(alt_fit$dispersion.fit)))) {
+      #   next
+      # }
 
       if ('DS' %in% all.vars(mean_alt_formula)) {
 
-        beta_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit))['DS', 'Estimate'])
-        se_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit))['DS', 'Std. Error'])
+        beta_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit$mean))['DS', 'Estimate'])
+        se_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit$mean))['DS', 'Std. Error'])
       }
 
       if ('DS' %in% all.vars(var_alt_formula)) {
@@ -100,45 +99,41 @@ mvGWAS$methods(
         se_DS_var[snp_idx] <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error'])
       }
 
+
       # mean test
       if (exists(x = 'mean_null_formula')) {
-        mean_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
-                                            dformula = var_alt_formula,
-                                            data = this_locus_df,
-                                            method = 'ml'))
+
+        mean_null_fit <- tryNULL(DGLM_norm(m.form = mean_null_formula,
+                                           d.form = var_alt_formula,
+                                           data = this_locus_df))
 
         if (is.null(mean_null_fit)) { next }
-        LR_mean[snp_idx] <- mean_null_fit$m2loglik - alt_fit$m2loglik
-        df_mean[snp_idx] <- df.residual(mean_null_fit) - df.residual(alt_fit)
-
-        # if (df_mean[snp_idx] == 0) { browser() }
+        LR_mean[snp_idx] <- 2*logLik(alt_fit$mean) - 2*logLik(mean_null_fit$mean)
+        df_mean[snp_idx] <- alt_fit$mean$rank - mean_null_fit$mean$rank
       }
+
 
       # var test
       if (exists(x = 'var_null_formula')) {
-        var_null_fit <- tryNULL(dglm::dglm(formula = mean_alt_formula,
-                                           dformula = var_null_formula,
-                                           data = this_locus_df,
-                                           method = 'ml'))
+
+        var_null_fit <- tryNULL(DGLM_norm(m.form = mean_alt_formula,
+                                          d.form = var_null_formula,
+                                          data = this_locus_df))
 
         if (is.null(var_null_fit)) { next }
-        LR_var[snp_idx] <- var_null_fit$m2loglik - alt_fit$m2loglik
-        df_var[snp_idx] <- df.residual(var_null_fit$dispersion.fit) - df.residual(alt_fit$dispersion.fit)
+        LR_var[snp_idx] <- 2*logLik(alt_fit$mean) - 2*logLik(var_null_fit$mean)
+        df_var[snp_idx] <- alt_fit$disp$rank - var_null_fit$disp$rank
       }
 
       # joint test
       if (all(exists(x = 'mean_null_formula'), exists(x = 'var_null_formula'))) {
-        joint_null_fit <- tryNULL(dglm::dglm(formula = mean_null_formula,
-                                             dformula = var_null_formula,
-                                             data = this_locus_df,
-                                             method = 'ml'))
+        joint_null_fit <- tryNULL(DGLM_norm(m.form = mean_null_formula,
+                                            d.form = var_null_formula,
+                                            data = this_locus_df))
 
         if (is.null(joint_null_fit)) { next }
-        LR_joint[snp_idx] <- joint_null_fit$m2loglik - alt_fit$m2loglik
-        df_joint[snp_idx] <- df.residual(mean_null_fit) +
-          df.residual(var_null_fit$dispersion.fit) -
-          df.residual(alt_fit) -
-          df.residual(alt_fit$dispersion.fit)
+        LR_joint[snp_idx] <- 2*logLik(alt_fit$mean) - 2*logLik(joint_null_fit$mean)
+        df_joint[snp_idx] <- alt_fit$mean$rank + alt_fit$disp$rank - joint_null_fit$disp$rank - joint_null_fit$mean$rank
       }
 
     }
