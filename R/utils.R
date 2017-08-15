@@ -2,9 +2,11 @@
 #'
 #' @param m.form mean formula
 #' @param d.form variance formula
-#' @param indata data
+#' @param data data
 #' @param maxiter max number of iterations to do
 #' @param conv converges when LL changes by less than x
+#'
+#' @description this is a function that needs to be documented
 #'
 #' @return a list of length 3
 #' @export
@@ -24,7 +26,7 @@ DGLM_norm <- function(m.form, d.form, data, maxiter=20, conv=1e-6) {
     res <- resid(glm1)
     q <- hatvalues(glm1)
     y2 <- res^2
-    glm2 <- glm(y2~.-1, family = Gamma(link = log), weights = (1 - q)/2, data = data.frame(X.disp))
+    glm2 <- glm(y2~.-1, family = stats::Gamma(link = log), weights = (1 - q)/2, data = data.frame(X.disp))
     w <- 1/fitted(glm2)
     convergence <- (max(abs(w.old - w)) + (summary(glm1)$sigma - 1) )
   }
@@ -184,4 +186,117 @@ pull_GP <- function(snp_row) {
   genoprob_df$ID <- names(snp_row)
 
   return(genoprob_df[c('ID', 'GP_het', 'GP_alt')])
+}
+
+
+
+
+
+#' fit_dglm
+#'
+#' @param mean_alt_formula yada
+#' @param var_alt_formula yada
+#' @param mean_null_formula yada
+#' @param var_null_formula yada
+#' @param this_locus_df yada
+#'
+#' @return a one-row data_frame
+#' @export
+#'
+fit_dglm <- function(mean_alt_formula,
+                     var_alt_formula,
+                     mean_null_formula,
+                     var_null_formula,
+                     this_locus_df) {
+
+  alt_fit <- tryNULL(DGLM_norm(m.form = mean_alt_formula,
+                               d.form = var_alt_formula,
+                               data = this_locus_df))
+
+  # if we couldn't fit the alt model, move on
+  if (is.null(alt_fit)) {
+    return(dplyr::data_frame(LR_mean = NA,
+                             df_mean = NA,
+                             LR_var = NA,
+                             df_var = NA,
+                             LR_joint = NA,
+                             df_joint = NA))
+  }
+
+  if ('DS' %in% all.vars(mean_alt_formula)) {
+
+    beta_DS_mean <- tryNA(coef(summary(alt_fit$mean))['DS', 'Estimate'])
+    se_DS_mean <- tryNA(coef(summary(alt_fit$mean))['DS', 'Std. Error'])
+  }
+
+  if ('DS' %in% all.vars(var_alt_formula)) {
+
+    beta_DS_var <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate'])
+    se_DS_var <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error'])
+  }
+
+
+  # mean test
+  if (exists(x = 'mean_null_formula')) {
+
+    mean_null_fit <- tryNULL(DGLM_norm(m.form = mean_null_formula,
+                                       d.form = var_alt_formula,
+                                       data = this_locus_df))
+
+    if (is.null(mean_null_fit)) {
+      LR_mean <- df_mean <- NA
+    } else {
+      LR_mean <- as.numeric(2*logLik(alt_fit$mean) - 2*logLik(mean_null_fit$mean))
+      df_mean <- alt_fit$mean$rank - mean_null_fit$mean$rank
+    }
+  }
+
+
+  # var test
+  if (exists(x = 'var_null_formula')) {
+
+    var_null_fit <- tryNULL(DGLM_norm(m.form = mean_alt_formula,
+                                      d.form = var_null_formula,
+                                      data = this_locus_df))
+
+    if (is.null(var_null_fit)) {
+      LR_var <- df_var <- NA
+    } else {
+      LR_var <- as.numeric(2*logLik(alt_fit$mean) - 2*logLik(var_null_fit$mean))
+      df_var <- alt_fit$disp$rank - var_null_fit$disp$rank
+    }
+  }
+
+  # joint test
+  if (all(exists(x = 'mean_null_formula'), exists(x = 'var_null_formula'))) {
+    joint_null_fit <- tryNULL(DGLM_norm(m.form = mean_null_formula,
+                                        d.form = var_null_formula,
+                                        data = this_locus_df))
+
+    if (is.null(joint_null_fit)) {
+      LR_joint <- df_joint <- NA
+    } else {
+      LR_joint <- as.numeric(2*logLik(alt_fit$mean) - 2*logLik(joint_null_fit$mean))
+      df_joint <- alt_fit$mean$rank + alt_fit$disp$rank - joint_null_fit$disp$rank - joint_null_fit$mean$rank
+    }
+  }
+
+  dplyr::data_frame(LR_mean = LR_mean,
+                    df_mean = df_mean,
+                    LR_var = LR_var,
+                    df_var = df_var,
+                    LR_joint = LR_joint,
+                    df_joint = df_joint)
+}
+
+
+
+
+fit_JRS <- function(mean_alt_formula,
+                    var_alt_formula,
+                    mean_null_formula,
+                    var_null_formula,
+                    this_locus_df) {
+
+  return(NULL)
 }

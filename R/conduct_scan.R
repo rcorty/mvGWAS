@@ -9,6 +9,8 @@ mvGWAS$methods(
   scan_vcf_file_ = function(file_name,
                             min_gt_count = 5) {
 
+    message('Starting scan of', file_name)
+
     # for local
     try(expr = attach(what = data, warn.conflicts = FALSE), silent = TRUE)
     try(expr = attach(what = metadata, warn.conflicts = FALSE), silent = TRUE)
@@ -24,9 +26,9 @@ mvGWAS$methods(
     message('num_snps: ', num_snps)
     message('num_indivs: ', num_indivs)
 
-    LR_mean <- LR_var <- LR_joint <- rep(NA, num_snps)
-    df_mean <- df_var <- df_joint <- rep(NA, num_snps)
     this_locus_n <- rep(NA, num_snps)
+    snp_results <- list()
+    last_locus_df <- dplyr::data_frame()
 
     if ('DS' %in% all.vars(mean_alt_formula)) {
       beta_DS_mean <- se_DS_mean <- rep(NA, num_snps)
@@ -35,11 +37,8 @@ mvGWAS$methods(
       beta_DS_var <- se_DS_var <- rep(NA, num_snps)
     }
 
-    last_locus_df <- dplyr::data_frame()
 
     for (snp_idx in 1:num_snps) {
-
-      # message('Starting SNP ', snp_idx)
 
       this_locus_df <- phenotypes
 
@@ -63,6 +62,8 @@ mvGWAS$methods(
       }
 
       this_locus_df <- na.omit(object = this_locus_df)
+      this_locus_n[snp_idx] <- nrow(this_locus_df)
+      if (nrow(this_locus_df) == 0) { next }
 
       if (identical(this_locus_df, last_locus_df)) {
         LR_mean[snp_idx]  <- LR_mean[snp_idx - 1]
@@ -74,71 +75,17 @@ mvGWAS$methods(
         next
       }
 
-      this_locus_n[snp_idx] <- nrow(this_locus_df)
-      if (nrow(this_locus_df) == 0) { next }
 
-      alt_fit <- tryNULL(DGLM_norm(m.form = mean_alt_formula,
-                                   d.form = var_alt_formula,
-                                   data = this_locus_df))
+      func <- switch(model,
+                     dglm = fit_dglm,
+                     JRS = fit_JRS)
 
-      # if we couldn't fit the alt model, COMPLETELY, move on
-      # I believe that when one coef is NA (not estimated) it causes problems later
-      # e.g. with calculating the df of a test
-      if (is.null(alt_fit)) {
-        next
-      }
-      # if (any(is.na(coef(alt_fit)), is.na(coef(alt_fit$dispersion.fit)))) {
-      #   next
-      # }
-
-      if ('DS' %in% all.vars(mean_alt_formula)) {
-
-        beta_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit$mean))['DS', 'Estimate'])
-        se_DS_mean[snp_idx] <- tryNA(coef(summary(alt_fit$mean))['DS', 'Std. Error'])
-      }
-
-      if ('DS' %in% all.vars(var_alt_formula)) {
-
-        beta_DS_var[snp_idx] <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Estimate'])
-        se_DS_var[snp_idx] <- tryNA(coef(summary(alt_fit$dispersion.fit))['DS', 'Std. Error'])
-      }
-
-
-      # mean test
-      if (exists(x = 'mean_null_formula')) {
-
-        mean_null_fit <- tryNULL(DGLM_norm(m.form = mean_null_formula,
-                                           d.form = var_alt_formula,
-                                           data = this_locus_df))
-
-        if (is.null(mean_null_fit)) { next }
-        LR_mean[snp_idx] <- 2*logLik(alt_fit$mean) - 2*logLik(mean_null_fit$mean)
-        df_mean[snp_idx] <- alt_fit$mean$rank - mean_null_fit$mean$rank
-      }
-
-
-      # var test
-      if (exists(x = 'var_null_formula')) {
-
-        var_null_fit <- tryNULL(DGLM_norm(m.form = mean_alt_formula,
-                                          d.form = var_null_formula,
-                                          data = this_locus_df))
-
-        if (is.null(var_null_fit)) { next }
-        LR_var[snp_idx] <- 2*logLik(alt_fit$mean) - 2*logLik(var_null_fit$mean)
-        df_var[snp_idx] <- alt_fit$disp$rank - var_null_fit$disp$rank
-      }
-
-      # joint test
-      if (all(exists(x = 'mean_null_formula'), exists(x = 'var_null_formula'))) {
-        joint_null_fit <- tryNULL(DGLM_norm(m.form = mean_null_formula,
-                                            d.form = var_null_formula,
-                                            data = this_locus_df))
-
-        if (is.null(joint_null_fit)) { next }
-        LR_joint[snp_idx] <- 2*logLik(alt_fit$mean) - 2*logLik(joint_null_fit$mean)
-        df_joint[snp_idx] <- alt_fit$mean$rank + alt_fit$disp$rank - joint_null_fit$disp$rank - joint_null_fit$mean$rank
-      }
+      snp_results[[snp_idx]] <- do.call(what = func,
+                                        args = list(mean_alt_formula,
+                                                    var_alt_formula,
+                                                    mean_null_formula,
+                                                    var_null_formula,
+                                                    this_locus_df))
 
     }
 
@@ -148,36 +95,28 @@ mvGWAS$methods(
       dplyr::mutate(POS = as.integer(POS),
                     vcf_file = file_name)
 
-    result <- dplyr::data_frame(n          = this_locus_n,
-                                LR_mean    = LR_mean,
-                                LR_var     = LR_var,
-                                LR_joint   = LR_joint,
-                                df_mean    = df_mean,
-                                df_var     = df_var,
-                                df_joint   = df_joint,
-                                p_LR_mean  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
-                                p_LR_var   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
-                                p_LR_joint = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
+    result <- dplyr::bind_rows(snp_results) %>%
+      dplyr::mutate(n = this_locus_n,
+                    p_LR_mean  = pchisq(q = LR_mean,  df = df_mean,  lower.tail = FALSE),
+                    p_LR_var   = pchisq(q = LR_var,   df = df_var,   lower.tail = FALSE),
+                    p_LR_joint = pchisq(q = LR_joint, df = df_joint, lower.tail = FALSE))
 
     if ('DS' %in% all.vars(mean_alt_formula)) {
-      result <- dplyr::bind_cols(result,
-                                 dplyr::data_frame(beta_DS_mean = beta_DS_mean,
-                                                   se_DS_mean = se_DS_mean,
-                                                   z_DS_mean = beta_DS_mean/se_DS_mean,
-                                                   p_z_DS_mean = dplyr::if_else(condition = z_DS_mean < 0,
-                                                                                true = pnorm(q = z_DS_mean),
-                                                                                false = pnorm(q = z_DS_mean, lower.tail = TRUE),
-                                                                                missing = NA_real_)))
+      result <- result %>%
+        dplyr::mutate(z_DS_mean = beta_DS_mean/se_DS_mean,
+                      p_z_DS_mean = dplyr::if_else(condition = z_DS_mean < 0,
+                                                   true = pnorm(q = z_DS_mean),
+                                                   false = pnorm(q = z_DS_mean, lower.tail = TRUE),
+                                                   missing = NA_real_))
     }
+
     if ('DS' %in% all.vars(var_alt_formula)) {
-      result <- dplyr::bind_cols(result,
-                                 dplyr::data_frame(beta_DS_var = beta_DS_var,
-                                                   se_DS_var = se_DS_var,
-                                                   z_DS_var = beta_DS_var/se_DS_var,
-                                                   p_z_DS_var = dplyr::if_else(condition = z_DS_var < 0,
-                                                                               true = pnorm(q = z_DS_var),
-                                                                               false = pnorm(q = z_DS_var, lower.tail = TRUE),
-                                                                               missing = NA_real_)))
+      result <- result %>%
+        dplyr::mutate(z_DS_var = beta_DS_var/se_DS_var,
+                      p_z_DS_var = dplyr::if_else(condition = z_DS_var < 0,
+                                                  true = pnorm(q = z_DS_var),
+                                                  false = pnorm(q = z_DS_var, lower.tail = TRUE),
+                                                  missing = NA_real_))
     }
 
     return(dplyr::bind_cols(fix_df, result))
@@ -386,14 +325,18 @@ mvGWAS$methods(
   conduct_scan = function(mean_formula,
                           var_formula,
                           system = c('local', 'slurm'),
+                          model = c('dglm', 'dhglm'),
                           ...) {
 
     system <- match.arg(arg = system)
+    model <- match.arg(arg = model)
 
     determine_keyword_use_(mean_formula, var_formula)
 
     stash_formula_(formula = mean_formula, type = 'mean')
     stash_formula_(formula = var_formula, type = 'var')
+
+    metadata$model <<- model
 
     null_model <<- dglm::dglm(formula = metadata$mean_null_formula,
                               dformula = metadata$var_null_formula,

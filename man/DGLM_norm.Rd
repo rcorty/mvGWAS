@@ -11,11 +11,11 @@ DGLM_norm(m.form, d.form, data, maxiter = 20, conv = 1e-06)
 
 \item{d.form}{variance formula}
 
+\item{data}{data}
+
 \item{maxiter}{max number of iterations to do}
 
 \item{conv}{converges when LL changes by less than x}
-
-\item{indata}{data}
 }
 \value{
 a list of length 3
