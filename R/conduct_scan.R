@@ -256,7 +256,7 @@ mvGWAS$methods(
       if ('GP' %in% all.vars(expr = formula)) {
 
         r <- switch(EXPR = type, mean = formula[[2]], var = NULL)
-        new_terms <- gsub(pattern = 'GP', replacement = 'GP_het + GP_alt', x = labels(stats::terms(formula)))
+        new_terms <- gsub(pattern = 'GP', replacement = 'GP_add + GP_dom', x = labels(stats::terms(formula)))
         alt_formula <- reformulate(termlabels = new_terms, response = r)
 
       } else {

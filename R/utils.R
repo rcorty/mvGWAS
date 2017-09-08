@@ -179,9 +179,10 @@ pull_GP <- function(snp_row) {
     stop('Genoprobs dont add to 1.')
   }
 
-  genoprob_df <- as.data.frame(genoprobs_num)
-  names(genoprob_df) <- c('GP_ref', 'GP_het', 'GP_alt')
-  genoprob_df$ID <- names(snp_row)
+  gp_add <- genoprobs_num[,2] + 2*genoprobs_num[,3]
+  gp_dom <- genoprobs_num[,1] + genoprobs_num[,3]
 
-  return(genoprob_df[c('ID', 'GP_het', 'GP_alt')])
+  return(data.frame(ID = names(snp_row),
+                    GP_add = gp_add,
+                    GP_dom = gp_dom))
 }
