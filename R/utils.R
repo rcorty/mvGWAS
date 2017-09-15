@@ -55,6 +55,7 @@ pull_GT <- function(snp_row, min_gt_count) {
 
   snp_formats <- stringr::str_split(string = snp_row[1], pattern = ':')[[1]]
   gt_idx <- which(x = 'GT' == snp_formats)
+  if (length(gt_idx) == 0) { stop('GT not found in VCF')}
 
   snp_row <- snp_row[-1]
   num_indiv <- length(snp_row)
@@ -105,6 +106,7 @@ pull_DS <- function(snp_row) {
 
   snp_formats <- stringr::str_split(string = snp_row[1], pattern = ':')[[1]]
   ds_idx <- which(x = 'DS' == snp_formats)
+  if (length(ds_idx) == 0) { stop('DS not found in VCF')}
 
   snp_row <- snp_row[-1]
   num_indiv <- length(snp_row)
@@ -133,6 +135,7 @@ pull_GP <- function(snp_row) {
 
   snp_formats <- stringr::str_split(string = snp_row[1], pattern = ':')[[1]]
   gp_idx <- which(x = 'GP' == snp_formats)
+  if (length(gp_idx) == 0) { stop('GP not found in VCF')}
 
   snp_row <- snp_row[-1]
   num_indiv <- length(snp_row)
