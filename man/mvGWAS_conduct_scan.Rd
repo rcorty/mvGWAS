@@ -4,7 +4,7 @@
 \alias{mvGWAS_conduct_scan}
 \alias{mvGWAS_conduct_scan}
 \alias{mvGWAS_conduct_scan}
-\title{conduct_scan_local_}
+\title{conduct_scan}
 \arguments{
 \item{num_cores}{the number of cores to use for a local scan.  Defaults to \code{parallel::detectCores()}.}
 

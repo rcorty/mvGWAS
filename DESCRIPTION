@@ -2,8 +2,8 @@ Package: mvGWAS
 Type: Package
 Title: Uses the DGLM packge (double generalized linear model) to do a GWAS,
     assess significance of results, and plot results
-Version: 0.5
-Date: 2015-09-30
+Version: 0.5.2
+Date: 2018-10-15
 Author: Robert Corty
 Maintainer: <rcorty@gmail.com>
 Description: This GWAS approach allows for covariates to influence the
@@ -30,7 +30,7 @@ Imports: dplyr,
     methods,
     rlang
 VignetteBuilder: knitr
-Collate:
+Collate: 
     'InvestigateDGSNP.R'
     'PermutationNullByDGSNP.R'
     'PhenotypeByDGSNP.R'

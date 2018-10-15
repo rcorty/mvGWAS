@@ -33,6 +33,8 @@ mvGWAS$lock('created_at')
 #'
 #' @param phenotype_file The file that stores the phenotypes.  Must be a .CSV or .RDS.  Must have one column called 'ID'.
 #' @param genotype_directory The directory that stores the genotypes.  They must be in .vcf.gz format.
+#' @param genotype_file_pattern the pattern
+#' @param devel whether to stop being finnicky
 #'
 #' @return an mvGWAS object
 #'
@@ -42,11 +44,12 @@ mvGWAS$methods(
 
   initialize = function(phenotype_file,
                         genotype_directory,
-                        genotype_file_pattern = '.*\\.(vcf|VCF)') {
+                        genotype_file_pattern = '.*\\.(vcf|VCF)',
+                        devel = FALSE) {
 
     # check inputs
     stopifnot(file.exists(phenotype_file))
-    stopifnot(dir.exists(genotype_directory))
+    if (!devel) { stopifnot(dir.exists(genotype_directory)) }
 
     # read in phenotypes
     if (phenotype_file %>% tools::file_ext() %>% toupper() == 'RDS') {
@@ -57,9 +60,13 @@ mvGWAS$methods(
 
       phenotypes <- readr::read_csv(phenotype_file)
 
+    } else if (phenotype_file %>% tools::file_ext() %>% toupper() %in% c('PED', 'TSV', 'TXT')) {
+
+      phenotypes <- readr::read_tsv(phenotype_file)
+
     } else {
 
-      stop('phenotype_file must be a .RDS or .CSV')
+      stop('phenotype_file must be a .RDS, .CSV, .PED, .TSV, or .TXT file.')
 
     }
 

@@ -9,6 +9,10 @@
 \item{phenotype_file}{The file that stores the phenotypes.  Must be a .CSV or .RDS.  Must have one column called 'ID'.}
 
 \item{genotype_directory}{The directory that stores the genotypes.  They must be in .vcf.gz format.}
+
+\item{genotype_file_pattern}{the pattern}
+
+\item{devel}{whether to stop being finnicky}
 }
 \value{
 an mvGWAS object

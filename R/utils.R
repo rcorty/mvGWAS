@@ -153,5 +153,6 @@ pull_GP <- function(snp_row) {
 
   return(data.frame(ID = names(snp_row),
                     GP_add = gp_add,
-                    GP_dom = gp_dom))
+                    GP_dom = gp_dom,
+                    stringsAsFactors = FALSE))
 }
