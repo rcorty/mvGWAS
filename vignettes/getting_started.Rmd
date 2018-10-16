@@ -115,7 +115,7 @@ Only the null model for the joint test
 
 ## Genomic control
 
-TODO
+TODO...
 
 ## Write the results to file
 
