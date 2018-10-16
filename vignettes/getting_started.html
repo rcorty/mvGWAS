@@ -12,7 +12,7 @@
 
 <meta name="author" content="Robert W. Corty" />
 
-<meta name="date" content="2017-06-29" />
+<meta name="date" content="2018-10-16" />
 
 <title>Getting Started with mvGWAS</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Getting Started with mvGWAS</h1>
 <h4 class="author"><em>Robert W. Corty</em></h4>
-<h4 class="date"><em>2017-06-29</em></h4>
+<h4 class="date"><em>2018-10-16</em></h4>
 
 
 
@@ -85,12 +85,12 @@ The first column of the phenotype data <em>must</em> be called ‘ID’ and cont
 </ol>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(mvGWAS)
 
-my_first_gwas &lt;-<span class="st"> </span>mvGWAS$<span class="kw">new</span>(<span class="dt">phenotype_file =</span> <span class="st">'my_phenotype_file.csv'</span>,
+my_first_gwas &lt;-<span class="st"> </span>mvGWAS<span class="op">$</span><span class="kw">new</span>(<span class="dt">phenotype_file =</span> <span class="st">'my_phenotype_file.csv'</span>,
                             <span class="dt">genotype_directory =</span> <span class="st">'genotype_dir'</span>)</code></pre></div>
 <p>The first thing to note here is that we didn’t define <code>mvGWAS</code>. That’s because it’s defined in the package <code>mvGWAS</code> and exported. It is a “reference object generator”. When it’s used as above, it generates a reference object.</p>
 <p>We’ve saved the reference object it generated as <code>my_first_gwas</code>. This object contains all the methods for conducting an mvGWAS. So, going forward, <code>my_first_gwas</code> will be where all the action is.</p>
 <p>If you don’t want to scan all the VCF files in <code>genotype_directory</code>, you can also pass in <code>genotype_file_pattern</code>. If this argument is set, it restricts the VCF files that will be scanned to only those that match the pattern. For example, if you only want to scan chromosome 17 and you know that only the VCF files that relate to chromosome 17 will match the pattern ‘chr17’:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_second_gwas &lt;-<span class="st"> </span>mvGWAS$<span class="kw">new</span>(<span class="dt">phenotype_file =</span> <span class="st">'my_phenotype_file.csv'</span>,
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_second_gwas &lt;-<span class="st"> </span>mvGWAS<span class="op">$</span><span class="kw">new</span>(<span class="dt">phenotype_file =</span> <span class="st">'my_phenotype_file.csv'</span>,
                              <span class="dt">genotype_directory =</span> <span class="st">'genotype_dir'</span>,
                              <span class="dt">genotype_file_pattern =</span> <span class="st">'chr17'</span>)</code></pre></div>
 </div>
@@ -104,19 +104,19 @@ my_first_gwas &lt;-<span class="st"> </span>mvGWAS$<span class="kw">new</span>(<
 <li>GP – the probability of each genotype. From a linear model perspective, this generates a two-column numeric design matrix with complete certainty of homozygote reference as the reference level. Entry [i,1] is the probability that individual i is a heterozygote. Entry [i,2] is the probability that individual i is homozygrous for the alternate allele.</li>
 </ol>
 <p><code>var_formula</code> is a one-sided formula. It has no left side. Its right side follows the same rules as <code>mean_formula</code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_gwas$<span class="kw">conduct_scan</span>(<span class="dt">mean_formula =</span> my_trait ~<span class="st"> </span>PC1 +<span class="st"> </span>PC2 +<span class="st"> </span>sex +<span class="st"> </span>age +<span class="st"> </span>DS,
-                     <span class="dt">var_formula =</span> ~<span class="st"> </span>PC1 +<span class="st"> </span>PC2 +<span class="st"> </span>sex +<span class="st"> </span>GT)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_gwas<span class="op">$</span><span class="kw">conduct_scan</span>(<span class="dt">mean_formula =</span> my_trait <span class="op">~</span><span class="st"> </span>PC1 <span class="op">+</span><span class="st"> </span>PC2 <span class="op">+</span><span class="st"> </span>sex <span class="op">+</span><span class="st"> </span>age <span class="op">+</span><span class="st"> </span>DS,
+                     <span class="dt">var_formula =</span> <span class="op">~</span><span class="st"> </span>PC1 <span class="op">+</span><span class="st"> </span>PC2 <span class="op">+</span><span class="st"> </span>sex <span class="op">+</span><span class="st"> </span>GT)</code></pre></div>
 <p>By default, <code>conduct_scan()</code> runs on the local machine, using as many cores as are available (based on <code>parallel::detectCores()</code>). If you have a multi-core computer but don’t want to use them all in <code>conduct_scan()</code>, you can pass in the maximum number of cores to use as <code>num_cores</code>. For example:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_gwas$<span class="kw">conduct_scan</span>(<span class="dt">mean_formula =</span> my_trait ~<span class="st"> </span>PC1 +<span class="st"> </span>PC2 +<span class="st"> </span>sex +<span class="st"> </span>age +<span class="st"> </span>DS,
-                     <span class="dt">var_formula =</span> ~<span class="st"> </span>PC1 +<span class="st"> </span>PC2 +<span class="st"> </span>sex +<span class="st"> </span>GT,
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_gwas<span class="op">$</span><span class="kw">conduct_scan</span>(<span class="dt">mean_formula =</span> my_trait <span class="op">~</span><span class="st"> </span>PC1 <span class="op">+</span><span class="st"> </span>PC2 <span class="op">+</span><span class="st"> </span>sex <span class="op">+</span><span class="st"> </span>age <span class="op">+</span><span class="st"> </span>DS,
+                     <span class="dt">var_formula =</span> <span class="op">~</span><span class="st"> </span>PC1 <span class="op">+</span><span class="st"> </span>PC2 <span class="op">+</span><span class="st"> </span>sex <span class="op">+</span><span class="st"> </span>GT,
                      <span class="dt">num_cores =</span> <span class="dv">2</span>)</code></pre></div>
 <p>If <code>conduct_scan()</code> returns <code>TRUE</code>, it worked without error and the results are stored in <code>my_gwas$results</code>.</p>
 </div>
 <div id="view-the-results" class="section level2">
 <h2>View the results</h2>
 <p>There are currently two plotting functions, <code>qq_plot</code> and <code>manhattan_plot</code>. They are used as follows:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_gwas$<span class="kw">qq_plot</span>()
-my_gwas$<span class="kw">manhattan_plot</span>()</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">my_gwas<span class="op">$</span><span class="kw">qq_plot</span>()
+my_gwas<span class="op">$</span><span class="kw">manhattan_plot</span>()</code></pre></div>
 </div>
 <div id="view-the-joint-null-model" class="section level2">
 <h2>View the joint null model</h2>
@@ -124,10 +124,11 @@ my_gwas$<span class="kw">manhattan_plot</span>()</code></pre></div>
 </div>
 <div id="genomic-control" class="section level2">
 <h2>Genomic control</h2>
+<p>TODO</p>
 </div>
 <div id="write-the-results-to-file" class="section level2">
 <h2>Write the results to file</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aaabbb</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># todo</span></code></pre></div>
 </div>
 
 

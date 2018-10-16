@@ -115,12 +115,12 @@ Only the null model for the joint test
 
 ## Genomic control
 
+TODO
 
 ## Write the results to file
 
 ```{r eval=FALSE}
-aaabbb
-
+# todo
 ```
 
 
